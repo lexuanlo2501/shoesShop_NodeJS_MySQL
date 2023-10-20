@@ -11,8 +11,6 @@ app.use(cors({
     // origin: 'http://localhost:3000',
     // origin: true,
     origin: "*",
-
-
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true, // Allow sending cookies and other credentials
     // allowedHeaders:true,
