@@ -103,7 +103,7 @@ Shoes.find = async (id, result=()=>{}) => {
    let sql = `
         SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.dateCreate, B.type_name as type, C.per as discount_id
         FROM products A, types B, discount C
-        WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = c.id
+        WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = C.id
     `
 
     try {
