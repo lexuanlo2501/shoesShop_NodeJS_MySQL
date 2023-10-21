@@ -1,7 +1,6 @@
 const db = require("../common/connect")
 const fs = require('fs')
 
-
 const Shoes = (shoes) => {
 
 
