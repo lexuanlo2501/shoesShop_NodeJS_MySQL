@@ -14,8 +14,16 @@ app.use(cors({
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true, // Allow sending cookies and other credentials
     // allowedHeaders:true,
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
     exposedHeaders:"X-Total-Count"
 }));
+
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE');
+//     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With,content-type, Accept');
+//     next()
+// })
 
 
 require('./app/routes/shoes.router')(app)
