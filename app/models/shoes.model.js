@@ -69,32 +69,18 @@ Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min
             imgs: imgs.filter(img => img.product_id === product.id).map(i => i.name)
         }));
 
-        // PHƯƠNG ÁN TẠM THỜI VÌ slice CHẠY HẾT CÁC PHẦN TỬ TRONG MẢNG
-        // let sliceStart = (_page-1)*_limit
-        // result(_limit && _page ? combine.slice(sliceStart, sliceStart+_limit) : combine)
-        // return _limit && _page ? combine.slice(sliceStart, sliceStart+_limit) : combine;
-
+        
         // GET X-Total-Count
         let sqlGetXTotalCount = sql.split("LIMIT")[0].replace("*", "COUNT(*) AS totalCount")
-        // const countQuery = await sqlCustom.executeSql(
-        //     _brand?
-        //     `SELECT COUNT(*) AS totalCount FROM products WHERE brand_id = '${_brand}'`
-        //     :
-        //     `SELECT COUNT(*) AS totalCount FROM products`
-        // )
+        
         const countQuery = await sqlCustom.executeSql(sqlGetXTotalCount)
-           
         // console.log(sqlGetXTotalCount)
         // console.log(countQuery[0].totalCount)
-        
-        // 'SELECT COUNT(*) AS totalCount FROM your_table';
         
         // result(combine)
         result({shoes:combine, count:countQuery[0].totalCount})
 
         return(combine)
-
-
     } catch (error) {
         throw error;
     }

@@ -88,6 +88,7 @@ Orders.get = async (result, id, _client_id, _status) => {
 }
 
 Orders.create = async (data, result) => {
+    // data gửi từ client qua body nếu có thuộc tính id thì đó là thanh toán VNP
 
     const checkIdOrders = await sqlCustom.executeSql(`SELECT id  FROM orders WHERE id='${data.id}'`)
     console.log(checkIdOrders)
@@ -151,12 +152,14 @@ Orders.create = async (data, result) => {
     
                 // THÊM VÀO BẢNG detail_order 
                 await new Promise((resolve, reject) => {
+                    let findDiscount_prod = (id) => producst_sql.find(prod => prod.id === id).per
+
                     let values = restData.id ?
-                    products.map(i => [restData.id, i.product_id, i.size, i.quantity])
+                    products.map(i => [restData.id, i.product_id, i.size, i.quantity, findDiscount_prod(i.product_id)])
                     :
-                    products.map(i => [order.insertId, i.product_id, i.size, i.quantity])
+                    products.map(i => [order.insertId, i.product_id, i.size, i.quantity, findDiscount_prod(i.product_id)])
     
-                    db.query("INSERT INTO detail_order (order_id, product_id, size, quantity) VALUES ?", [values], (err) => {
+                    db.query("INSERT INTO detail_order (order_id, product_id, size, quantity, discount) VALUES ?", [values], (err) => {
                         if (err) {
                             reject(err);
                         } else {
