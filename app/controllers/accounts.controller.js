@@ -1,4 +1,3 @@
-const { response } = require("express")
 const Accounts = require("../models/accounts.model")
 
 exports.get_account = (req, res) => {
@@ -15,6 +14,7 @@ exports.create_account = (req, res) => {
 }
 
 exports.signIn = (req, res) => {
+    req.session.accName = req.body.accName;
     Accounts.signIn(req.body, response => {
         res.send(response)
     })

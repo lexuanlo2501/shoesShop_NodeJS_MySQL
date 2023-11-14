@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const sessionMiddleware = require('./config/session');
+
 require("dotenv").config();
 
 app.use(express.static('public'))
@@ -18,7 +20,7 @@ app.use(cors({
     exposedHeaders:"X-Total-Count"
 }));
 
-
+app.use(sessionMiddleware);
 
 require('./app/routes/shoes.router')(app)
 require('./app/routes/accounts.router')(app)
@@ -27,6 +29,8 @@ require('./app/routes/brand.router')(app)
 require('./app/routes/type.router')(app)
 require('./app/routes/orders.router')(app)
 require('./app/routes/discount.router')(app)
+require('./app/routes/notify.router')(app)
+
 
 
 

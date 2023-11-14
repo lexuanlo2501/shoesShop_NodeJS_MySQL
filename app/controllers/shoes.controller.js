@@ -20,9 +20,12 @@ exports.find_shoes = (req, res) => {
 }
 
 exports.find_list_shoes = (req, res) => {
+  const {_page, _limit} = req.query
   Shoes.findList(req.params.id, response => {
-    res.status(200).send(response)
-  })
+    // res.status(200).send(response)
+    res.setHeader("X-Total-Count", +response.count);
+    res.send(response.shoes)
+  },_page,_limit)
 }
 
 exports.add_shoes = (req, res) => {
@@ -105,6 +108,12 @@ exports.delete_imgs = (req, res) => {
 
 exports.im_export_prod = (req, res) => {
   Shoes.im_exportProd(req.body, response => {
+    res.status(200).send(response)
+  })
+}
+
+exports.modify_discount = (req, res) => {
+  Shoes.modifyDiscount(req.body, response => {
     res.status(200).send(response)
   })
 }

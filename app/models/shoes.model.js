@@ -12,7 +12,7 @@ const sqlCustom = require('../common/sqlQuery')
 
 Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min, _max, _brand, _string, _isDiscount) => {
     try {
-        console.log({_page, _limit, _type, _min, _max, _brand, _string})
+        console.log({_page, _limit, _type, _min, _max, _brand, _string, _isDiscount})
 
         let sql = brand_id ? 
         `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products WHERE brand_id = '${brand_id.toUpperCase()}'` 
@@ -32,12 +32,8 @@ Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min
         if(sql.includes("WHERE")) sql = _string ? sql + ` AND name LIKE '%${_string}%'` : sql
         else sql = _string ? sql + ` WHERE name LIKE '%${_string}%'` : sql
 
-        if(sql.includes("WHERE")) sql = _isDiscount ? sql + ` AND discount_id != 0` : sql
-        else sql = _isDiscount ? sql + ` WHERE discount_id != 0` : sql
-
-        
-
-       
+        if(sql.includes("WHERE")) sql = _isDiscount==="true" ? sql + ` AND discount_id != 0` : sql
+        else sql = _isDiscount==="true" ? sql + ` WHERE discount_id != 0` : sql
 
         sql = _page && _limit ? sql + ` LIMIT ${_limit} OFFSET ${_limit*(_page-1)}` : sql
         // _page+_page-2 IS INDEX OF VALUE IN DATA START
@@ -51,10 +47,13 @@ Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min
                 }
             });
         });
-
+        const shoes_id = shoes.map(i => i.id).toString()
         // executeSql_all
-        const inventory = await sqlCustom.executeSql_SelectAll('inventory')
-        const imgs = await sqlCustom.executeSql_SelectAll('imgs')
+
+        // const inventory = await sqlCustom.executeSql_SelectAll('inventory')
+        // const imgs = await sqlCustom.executeSql_SelectAll('imgs')
+        const inventory = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id IN (${shoes_id || 0})`)
+        const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id IN (${shoes_id || 0})`)
         const discounts = await sqlCustom.executeSql_SelectAll('discount')
         const types = await sqlCustom.executeSql_SelectAll('types')
 
@@ -128,19 +127,27 @@ Shoes.find = async (id, result=()=>{}) => {
     }
 };
 
-Shoes.findList = async (id, result) => {
-    let listID = id.split(",").map(i => +i)
-
+Shoes.findList = async (ids="d", result,  _page=0, _limit=0,) => {
+    console.log(ids)
     function removeDuplicates(array) {
         const duplicates = array.filter((value, index, self) => {
           return self.indexOf(value) === index;
         });
-      
         return [...new Set(duplicates)];
     }
 
+    let listID = ids.split(",").map(i => +i)
     listID = removeDuplicates(listID)
+    console.log(listID)
+    // Xóa phần tử đầu tiên trong mãng ids (vì fix cứng ở client phần tử đầu tiêu là số 0) 
+    // ...
+    if(listID[0] === 0) listID.shift()
     
+
+    if(_page && _limit) {
+        // phân mảng để phân trang
+        listID =  listID.splice(_limit*(_page-1), _limit)
+    }
     let products = []
 
     for (const id of listID) {
@@ -149,8 +156,17 @@ Shoes.findList = async (id, result) => {
             products.push(shoes)
         }
     }
+
+     // GET X-Total-Count
+    let sql = `SELECT * FROM products WHERE id IN (${ids})`
+    sql = _page && _limit ? sql + ` LIMIT ${_limit} OFFSET ${_limit*(_page-1)}` : sql
+
+     let sqlGetXTotalCount = sql.split("LIMIT")[0].replace("*", "COUNT(*) AS totalCount")
+        
+     const countQuery = await sqlCustom.executeSql(sqlGetXTotalCount)
     
-    result(products)
+     result({shoes:products, count:countQuery[0].totalCount})
+    // result(products)
 }
 
 
@@ -172,7 +188,8 @@ Shoes.create = async (data, result) => {
         if(imgs.length) {
             let initial_imgs = imgs
             let values = initial_imgs.map(img => [ img, product.insertId])
-            values = [...values, [restData.img, product.insertId]]
+            // values = [...values, [restData.img, product.insertId]]
+
             
             await sqlCustom.executeSql_value("INSERT INTO imgs (name, product_id) VALUES  ?", [values])
 
@@ -335,6 +352,32 @@ Shoes.im_exportProd = async (data, result) => {
             return `Bạn đã ${action} kho ${quantity} sản phẩm, size ${data.size} vào mã sản phẩm ${data.product_id}`
         }
         result(mess(data.quantity))
+    } catch (error) {
+        result(null)
+        throw error
+    }
+}
+
+Shoes.modifyDiscount = async (data, result) => {
+    try {
+        if(data.action === "remove") {
+            await Promise.all(
+                data.list.map(async (prod_id) => {
+                    return await sqlCustom.executeSql(`UPDATE products SET discount_id = 0 WHERE id=${prod_id}`)
+                })
+            )
+            result("Đã gỡ khuyến mãi SP mã: " + data.list.toString())
+
+        }
+        else if(data.action === "add") {
+             await Promise.all(
+                data.list.map(async (prod_id) => {
+                    return await sqlCustom.executeSql(`UPDATE products SET discount_id = ${data.discount_id} WHERE id=${prod_id}`)
+                })
+            )
+             result("Đã sữa khuyến mãi SP mã: " + data.list.toString())
+        }
+        
     } catch (error) {
         result(null)
         throw error

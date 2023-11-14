@@ -7,12 +7,14 @@ const Orders = (shoes) => {
 }
 
 const sqlCustom = require('../common/sqlQuery')
+const sqlCustom_2 = require('../common/sqlQuery_2')
+
 
 
 Orders.get = async (result, id, _client_id, _status) => {
-    let config = require("config")
-    console.log(config.get('vnp_TmnCode'))
-    console.log(config.get('vnp_HashSecret'))
+    // let config = require("config")
+    // console.log(config.get('vnp_TmnCode'))
+    // console.log(config.get('vnp_HashSecret'))
 
    
     let sql = id ? 
@@ -43,15 +45,7 @@ Orders.get = async (result, id, _client_id, _status) => {
         })
     })
 
-    const detail = await new Promise((resolve, reject) => {
-        db.query("SELECT * FROM detail_order", (err, detail) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(detail);
-        })
-    })
+    const detail = id ? await sqlCustom.executeSql(`SELECT * FROM detail_order WHERE order_id = ${id}`) : await sqlCustom.executeSql("SELECT * FROM detail_order")
 
     const filerOrder = (arr, id) => {
         return arr.filter(i => i.order_id === id)
@@ -67,10 +61,12 @@ Orders.get = async (result, id, _client_id, _status) => {
             const findProduct  = dataFind.find(product => product.id === prod.product_id)
             return {
                 ...findProduct,
-                detail_order_id: prod.id,
+                // detail_order_id: prod.id,
                 size: prod.size,
                 quantity: prod.quantity,
-                rating: prod.rating
+                rating: prod.rating,
+                discount: prod.discount
+
 
             }
         })
@@ -271,8 +267,20 @@ Orders.delete = async (id, result) => {
 Orders.update = async (id, data, result) => {
     try {
         const {...restData} = data
-        const sqlUpdate = sqlCustom.executeSql_value("UPDATE orders SET ? WHERE id = ?", [restData, id])
+        const sqlUpdate = await sqlCustom.executeSql_value("UPDATE orders SET ? WHERE id = ?", [restData, id])
         console.log(sqlUpdate)
+
+        if(restData.status === 2) {
+            accName = await sqlCustom.executeSql(`SELECT client_id FROM orders WHERE id = ${id}`)
+            console.log(accName)
+            // db.query("INSERT INTO detail_order (order_id, product_id, size, quantity, discount) VALUES ?", [values], (err) => {
+            // db.query("INSERT INTO orders SET ?",{...restData, amount:amount}, (err, order_ins) => {
+            let content = "Đơn hàng đã được xác nhận. Đơn vị vận chuyển đang giao hàng đến bạn"
+            await sqlCustom_2.executeSql_value(`INSERT INTO notify(id_notify_type, content, accName) VALUES (1,"${content}","${accName[0].client_id}")`)
+            
+
+        }
+
         result("Cập nhật thành công")
 
 
