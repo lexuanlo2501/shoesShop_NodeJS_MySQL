@@ -7,15 +7,10 @@ const Orders = (shoes) => {
 }
 
 const sqlCustom = require('../common/sqlQuery')
-const sqlCustom_2 = require('../common/sqlQuery_2')
 
 
 
 Orders.get = async (result, id, _client_id, _status) => {
-    // let config = require("config")
-    // console.log(config.get('vnp_TmnCode'))
-    // console.log(config.get('vnp_HashSecret'))
-
    
     let sql = id ? 
     `SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders WHERE id='${id}'`
@@ -79,7 +74,12 @@ Orders.get = async (result, id, _client_id, _status) => {
         }
     })
 
-    result(id ? orders[0] :orders)
+    if(orders.length === 0) {
+        result("Không tồn tại mã đơn "+id)
+    }
+    else {
+        result(id ? orders[0] :orders)
+    }
 
 }
 
@@ -145,6 +145,10 @@ Orders.create = async (data, result) => {
                         }
                     })
                 })
+
+                // THÊM THÔNG BÁO CÓ ĐƠN HÀNG
+                const content = `Mã đơn ${order.insertId}: Số Lượng ${products.length} đôi`
+                await sqlCustom.executeSql(`INSERT INTO notify(id_notify_type, content, to_admin_all) VALUES (7,"${content}","admin")`)
     
                 // THÊM VÀO BẢNG detail_order 
                 await new Promise((resolve, reject) => {
@@ -276,7 +280,7 @@ Orders.update = async (id, data, result) => {
             // db.query("INSERT INTO detail_order (order_id, product_id, size, quantity, discount) VALUES ?", [values], (err) => {
             // db.query("INSERT INTO orders SET ?",{...restData, amount:amount}, (err, order_ins) => {
             let content = "Đơn hàng đã được xác nhận. Đơn vị vận chuyển đang giao hàng đến bạn"
-            await sqlCustom_2.executeSql_value(`INSERT INTO notify(id_notify_type, content, accName) VALUES (1,"${content}","${accName[0].client_id}")`)
+            await sqlCustom.executeSql_value(`INSERT INTO notify(id_notify_type, content, accName) VALUES (1,"${content}","${accName[0].client_id}")`)
             
 
         }

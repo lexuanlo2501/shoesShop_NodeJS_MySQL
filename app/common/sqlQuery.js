@@ -1,5 +1,4 @@
 const db = require("./connect")
-const db_2 = require("./connect_2")
 
 
 exports.executeSql = async (sql) => {
@@ -17,19 +16,6 @@ exports.executeSql = async (sql) => {
     });
 }
 
-exports.executeSql_2 = async (sql) => {
-    return await new Promise((resolve, reject) => {
-        db_2.query(sql, (err, data) => {
-            if (err) {
-                reject(err);
-                throw err
-            }
-            else {
-                resolve(data);
-            }
-        });
-    });
-}
 
 exports.executeSql_value = async (sql, value) => {
     return await new Promise((resolve, reject) => {
