@@ -1,4 +1,3 @@
-const db = require("../common/connect")
 
 const Brands = (Brand) => {
 

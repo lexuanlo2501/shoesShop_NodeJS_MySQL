@@ -36,4 +36,26 @@ Type.delete = async (id, result) => {
     }
 }
 
+Type.update = async (id, dataBody, result) => {
+    try {
+        const category = await sqlCustom.executeSql(`SELECT * FROM category WHERE id = ${dataBody.category_id}`)
+        if(category.length) {
+             await sqlCustom.executeSql(`
+                UPDATE types
+                SET category_id = ${dataBody.category_id}
+                WHERE id = ${id};
+            `)
+            result("Cập nhật loại sản phẩm thành công")
+        }
+        else {
+            result(`Không tồn tại ${dataBody.category_id} trong bảng category`)
+
+        }
+       
+    } catch (error) {
+        result(null)
+        throw error
+    }
+}
+
 module.exports = Type

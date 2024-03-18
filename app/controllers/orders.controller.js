@@ -1,10 +1,11 @@
+const { response } = require("express")
 const Orders = require("../models/orders.model")
 
 exports.get_orders = (req, res) => {
-    const {_client_id, _status} = req.query
+    const {_client_id, _status, _day, _month, _year} = req.query
     Orders.get(response => {
         res.send(response)
-    }, req.params.id, _client_id, _status)
+    }, req.params.id, _client_id, _status, _day, _month, _year)
 }
 
 exports.create_orders = (req, res) => {
@@ -31,3 +32,9 @@ exports.rating_product = (req, res) => {
     })
 }
 
+
+exports.revenue_day = (req, res) => {
+    Orders.revenueDay(req.query._month, req.query._year, (response) => {
+        res.send(response)
+    })
+}

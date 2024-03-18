@@ -4,6 +4,4 @@ module.exports = (router) => {
     router.post("/discounts", discountController.create_discount)
     router.delete("/discounts/:id", discountController.delete_discount)
 
-    
-
 }

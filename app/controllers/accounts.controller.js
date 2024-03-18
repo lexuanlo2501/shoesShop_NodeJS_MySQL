@@ -1,4 +1,7 @@
 const Accounts = require("../models/accounts.model")
+const JWT = require("../common/_JWT")
+const sqlCustom = require('../common/sqlQuery')
+
 
 exports.get_account = (req, res) => {
     Accounts.get(response => {
@@ -14,10 +17,47 @@ exports.create_account = (req, res) => {
 }
 
 exports.signIn = (req, res) => {
-    req.session.accName = req.body.accName;
+    // req.session.accName = req.body.accName;
     Accounts.signIn(req.body, response => {
         res.send(response)
     })
+}
+
+
+exports.signIn_2 = (req, res) => {
+    // req.session.accName = req.body.accName;
+    Accounts.signIn(req.body, async (response) => {
+        
+        if(response.status) {
+            let {password, email, phoneNumber, date_create, dateOfBirth, gender,...rest} = response
+
+            const _token = await JWT.make(rest) 
+            const _refreshToken = await JWT.generateRefreshToken(rest)
+            
+            // res.cookie("refreshToken", _refreshToken, {
+            //     httpOnly: true,
+            //     secure: false,
+            //     path: "/",
+            //     sameSite: "strict"
+            //     // sameSite: 'none'
+            // })
+            await sqlCustom.executeSql_value("INSERT INTO refreshtokens SET ?", {accName:response.accName, value: _refreshToken})
+
+            res.status(200).json({accessToken: _token, status:true})
+        }
+        else {
+            res.status(200).json(response)
+        }
+
+    })
+}
+
+
+
+exports.userLogOut = async(req, res) => {
+    res.clearCookie("refreshToken")
+    await sqlCustom.executeSql(`DELETE FROM refreshtokens WHERE accName = '${req.params.id}'`)
+    res.status(200).json("Logged out")
 }
 
 exports.update_acc = (req, res) => {
@@ -48,4 +88,80 @@ exports.rating_product = (req, res) => {
     Accounts.rating(req.body, (response) => {
         res.send(response)
     })
+}
+
+
+
+
+exports.requestRefreshToken = async(req, res) => {
+    const refreshToken = req.cookies.refreshToken
+    // console.log("-----in func requestRefreshToken")
+    // console.log(req.cookies)
+
+    if(!refreshToken) {
+        return res.status(401).json("Bạn chưa đăng nhập")
+    }
+
+    // temporary method (fake database)
+    // if(!refreshTokens.includes(refreshToken)){
+    //     return res.status(403).json("Refresh token is not valid")
+    // }
+
+    try {
+        // refreshTokens = refreshTokens.filter(token => token !== refreshToken)
+
+        let authorData = await JWT.checkFresh(refreshToken)
+       
+        const newAccessToken = await JWT.make(authorData?.data) 
+        const newRefreshToken = await JWT.generateRefreshToken(authorData?.data)
+
+
+        res.cookie("refreshToken", newRefreshToken, {
+            httpOnly:true,
+            secure: false,
+            path: "/",
+            sameSite: "strict"
+        })
+        res.status(200).json({
+            accessToken: newAccessToken,
+        })
+
+
+    }
+    catch(err) {
+        console.log(err)
+        res.status(500).json("err")
+        
+    }
+
+    // res.status(200).json(refreshToken)
+}
+
+exports.requestRefreshToken_v2 = async(req, res) => {
+    // const refreshToken = req.body.refreshToken
+    let refreshToken_user = await sqlCustom.executeSql(`SELECT * FROM refreshTokens WHERE accName = '${req.body.accName}'`)
+    refreshToken_user = refreshToken_user[0]?.value
+    if(refreshToken_user) {
+        console.log("excute refreshTokens")
+
+        let authorData = await JWT.checkFresh(refreshToken_user)
+       
+        const newAccessToken = await JWT.make(authorData?.data) 
+        const newRefreshToken = await JWT.generateRefreshToken(authorData?.data)
+        
+        await sqlCustom.executeSql_value("UPDATE refreshTokens SET value = ? WHERE accName = ?", [newRefreshToken, req.body.accName])
+
+        // res.cookie("refreshToken", newRefreshToken, {
+        //     httpOnly:true,
+        //     secure: false,
+        //     path: "/",
+        //     sameSite: "strict"
+        // })
+        res.status(200).json({
+            accessToken: newAccessToken,
+        })
+    }
+    else {
+        res.status(500).json("refreshToken không hợp lệ")
+    }
 }

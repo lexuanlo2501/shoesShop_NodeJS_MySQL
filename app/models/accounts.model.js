@@ -2,17 +2,23 @@ const db = require("../common/connect")
 const md5 = require("md5")
 const sqlCustom = require('../common/sqlQuery')
 
+
 const Accounts = (acc) => {
 
 }
 
+
+
 Accounts.get = async (result, id) => {
+    
+    // Kết nối đến cơ sở dữ liệu và nhận đối tượng db
+   
     try {
         let sql = 
         id ? 
-        `SELECT accName,fullName,email,phoneNumber,dateOfBirth,gender,role,isLock, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create, favorite FROM accounts WHERE accName='${id}'`
+        `SELECT accName,fullName,email,phoneNumber, DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth,gender,role,isLock, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create, favorite FROM accounts WHERE accName='${id}'`
         :
-        "SELECT accName,fullName,email,phoneNumber,dateOfBirth,gender,role,isLock, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create, favorite FROM accounts"
+        "SELECT accName,fullName,email,phoneNumber, DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth,gender,role,isLock, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create, favorite FROM accounts"
     
         const acc = await sqlCustom.executeSql(sql)
         let infor_acc = id ? acc[0] : acc

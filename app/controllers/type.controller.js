@@ -10,6 +10,10 @@ exports.create_type = (req,res) => {
     Types.create(req.body, response => res.status(200).send(response))
 }
 
-exports.delete_discount = (req, res) => {
+exports.delete_type = (req, res) => {
     Types.delete(req.params.id, response => res.status(200).send(response))
+}
+
+exports.update_type = (req, res) => {
+    Types.update(req.params.id,req.body, response => res.status(200).send(response))
 }

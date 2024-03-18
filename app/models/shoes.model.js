@@ -10,14 +10,25 @@ const sqlCustom = require('../common/sqlQuery')
 
 
 
-Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min, _max, _brand, _string, _isDiscount) => {
+Shoes.get_all = async (result=() => {}, brand_id, query_) => {
     try {
-        console.log({_page, _limit, _type, _min, _max, _brand, _string, _isDiscount})
+        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category} = query_
+        console.log(query_)
 
-        let sql = brand_id ? 
-        `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products WHERE brand_id = '${brand_id.toUpperCase()}'` 
-        : 
-        `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`;
+        // let sql = brand_id ? 
+        // `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products WHERE brand_id = '${brand_id.toUpperCase()}'` 
+        // : 
+        // `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`;
+
+        let sql = `SELECT *,  DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`
+        let sqlHaveCategory = `
+            SELECT products.*, types.category_id, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate 
+            FROM products
+                INNER JOIN types ON products.type = types.id
+            WHERE types.category_id = ${_category}
+        `
+
+        sql = _category ?  sqlHaveCategory : sql
 
         // HANDLE QUERY PARAMETERS
         if(sql.includes("WHERE")) sql = _brand ? sql + ` AND brand_id = ${_brand}` : sql
@@ -34,6 +45,10 @@ Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min
 
         if(sql.includes("WHERE")) sql = _isDiscount==="true" ? sql + ` AND discount_id != 0` : sql
         else sql = _isDiscount==="true" ? sql + ` WHERE discount_id != 0` : sql
+
+        if(_random==="true") {
+            sql += ` ORDER BY RAND()`
+        }
 
         sql = _page && _limit ? sql + ` LIMIT ${_limit} OFFSET ${_limit*(_page-1)}` : sql
         // _page+_page-2 IS INDEX OF VALUE IN DATA START
@@ -70,7 +85,10 @@ Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min
 
         
         // GET X-Total-Count
-        let sqlGetXTotalCount = sql.split("LIMIT")[0].replace("*", "COUNT(*) AS totalCount")
+        let sqlGetXTotalCount = _category ?
+        sql.split("LIMIT")[0].replace("products.*", "COUNT(*) AS totalCount")
+        :
+        sql.split("LIMIT")[0].replace("*", "COUNT(*) AS totalCount")
         
         const countQuery = await sqlCustom.executeSql(sqlGetXTotalCount)
         // console.log(sqlGetXTotalCount)
@@ -89,7 +107,7 @@ Shoes.get_all = async (result=() => {}, brand_id, _page=0, _limit=0, _type, _min
 Shoes.find = async (id, result=()=>{}) => {
 
    let sql = `
-        SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.dateCreate, B.type_name as type, C.per as discount_id
+        SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.dateCreate, A.isLock, B.type_name as type, C.per as discount_id
         FROM products A, types B, discount C
         WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = C.id
     `
@@ -99,10 +117,10 @@ Shoes.find = async (id, result=()=>{}) => {
 
         let product = (await sqlCustom.executeSql(sql))[0]
         if (await product) {
-            const inven = await sqlCustom.executeSql_getByID("inventory", "product_id", id)
-            const imgs = await sqlCustom.executeSql_getByID("imgs", "product_id", id) || []
+            const inven = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id = ${id}`)
+            // const imgs = await sqlCustom.executeSql_getByID("imgs", "product_id", id) || []
+            const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id = ${id}`) || []
             
-
             const data = {
                 ...product,
                 
@@ -110,7 +128,7 @@ Shoes.find = async (id, result=()=>{}) => {
                     size: i.size,
                     quantity: i.quantity
                 })),
-                imgs: [...imgs].map(img => img.name)
+                imgs: [...imgs].map(img => img?.name)
             };
             result(data)
             return data;
@@ -127,8 +145,8 @@ Shoes.find = async (id, result=()=>{}) => {
     }
 };
 
-Shoes.findList = async (ids="d", result,  _page=0, _limit=0,) => {
-    console.log(ids)
+Shoes.findList = async (ids="d", result=()=>{},  _page=0, _limit=0,) => {
+    // console.log(ids)
     function removeDuplicates(array) {
         const duplicates = array.filter((value, index, self) => {
           return self.indexOf(value) === index;
@@ -138,7 +156,7 @@ Shoes.findList = async (ids="d", result,  _page=0, _limit=0,) => {
 
     let listID = ids.split(",").map(i => +i)
     listID = removeDuplicates(listID)
-    console.log(listID)
+    // console.log(listID)
     // Xóa phần tử đầu tiên trong mãng ids (vì fix cứng ở client phần tử đầu tiêu là số 0) 
     // ...
     if(listID[0] === 0) listID.shift()
@@ -156,7 +174,6 @@ Shoes.findList = async (ids="d", result,  _page=0, _limit=0,) => {
             products.push(shoes)
         }
     }
-
      // GET X-Total-Count
     let sql = `SELECT * FROM products WHERE id IN (${ids})`
     sql = _page && _limit ? sql + ` LIMIT ${_limit} OFFSET ${_limit*(_page-1)}` : sql
@@ -166,7 +183,7 @@ Shoes.findList = async (ids="d", result,  _page=0, _limit=0,) => {
      const countQuery = await sqlCustom.executeSql(sqlGetXTotalCount)
     
      result({shoes:products, count:countQuery[0].totalCount})
-    // result(products)
+     return(products)
 }
 
 
@@ -230,13 +247,17 @@ Shoes.delete = async (id, result) => {
         }
         
         // LẤY RA CÁC TÊN ẢNH (imgs) của products
-        const imgsInDB = await sqlCustom.executeSql_value("SELECT * FROM imgs WHERE product_id = ?", id)
-        
+        let imgsInDB = await sqlCustom.executeSql_value("SELECT * FROM imgs WHERE product_id = ?", id)
+        const product = await sqlCustom.executeSql_value(`SELECT img FROM products WHERE id = ?`, id)
         // imgsInDB.map(img => img.name).forEach((filename) => {
         //     handleDeleteFileImg(filename)
         // });
+        imgsInDB = [...imgsInDB.map(img => img.name), product[0].img]
+        console.log(product)
+        console.log(imgsInDB)
 
-        imgsInDB.map(img => img.name).forEach((filename) => {
+
+        imgsInDB.forEach((filename) => {
             let filePath = __dirname + "/public/imgs/" + filename;
             filePath = filePath.replace("\\app\\models","").replaceAll("/", "\\")
             if (fs.existsSync(filePath)) {
@@ -330,7 +351,7 @@ Shoes.update = (id, data, result) => {
         console.log(imgs)
         if(imgs.length) {
             // DELETE ALL IMG HAVE ID = id
-            db.query("DELETE FROM  imgs WHERE product_id = ?",id, err => {
+            db.query("DELETE FROM imgs WHERE product_id = ?",id, err => {
                 if(err) throw err
             })
             // ADD DATA IMG UPDATE

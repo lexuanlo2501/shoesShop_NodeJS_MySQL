@@ -1,5 +1,6 @@
 
 const moment = require('moment');
+const _AuthMiddleWare = require('../common/_AuthMiddleWare')
 
 
 function sortObject(obj) {
@@ -24,10 +25,13 @@ module.exports = (router) => {
     const ordersController = require("../controllers/orders.controller")
     router.get("/orders", ordersController.get_orders)
     router.get("/orders/:id", ordersController.get_orders)
-    router.post("/orders", ordersController.create_orders)
+    router.post("/orders", _AuthMiddleWare.isAuth,ordersController.create_orders)
     router.delete("/orders/:id", ordersController.delete_orders)
     router.patch("/orders/:id", ordersController.update_orders)
     router.post("/rating", ordersController.rating_product)
+
+    router.get("/revenue_day", ordersController.revenue_day)
+
 
 
     // router.post('/create_payment_url', function (req, res, next) {

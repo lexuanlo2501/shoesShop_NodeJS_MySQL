@@ -10,7 +10,7 @@ const sqlCustom = require('../common/sqlQuery')
 
 
 
-Orders.get = async (result, id, _client_id, _status) => {
+Orders.get = async (result, id, _client_id, _status, _day, _month, _year) => {
    
     let sql = id ? 
     `SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders WHERE id='${id}'`
@@ -26,6 +26,19 @@ Orders.get = async (result, id, _client_id, _status) => {
         }
     }
 
+
+
+    if(_day) {
+        sql = sql.includes("WHERE") ? sql + ` AND DAY(date_order)=${_day}` : sql + ` WHERE DAY(date_order)=${_day}`
+    }
+    if(_month) {
+        sql = sql.includes("WHERE") ? sql + ` AND MONTH(date_order)=${_month}` : sql + ` WHERE MONTH(date_order)=${_month}`
+    }
+    if(_year) {
+        sql = sql.includes("WHERE") ? sql + ` AND YEAR(date_order)=${_year}` : sql + ` WHERE YEAR(date_order)=${_year}`
+    }
+
+   
     if(_status) {
         sql = sql.includes("WHERE") ? sql + ` AND status = '${_status}'` :  sql + ` WHERE status = '${_status}'`
     }
@@ -50,35 +63,44 @@ Orders.get = async (result, id, _client_id, _status) => {
 
     const shoesModel = require("../models/shoes.model")
     const dataFind = await shoesModel.get_all()
+
+    // const dataFind_list = await shoesModel.find(100)
+    // console.log(dataFind_list)
+
     
-    let orders = [...ord].map(i => {
-        let products_order = filerOrder(detail, i.id).map( (prod) => {
+    
+    let orders = [...ord].map( i => {
+        let products_order =  filerOrder(detail, i.id).map( (prod) => {
             const findProduct  = dataFind.find(product => product.id === prod.product_id)
+            console.log(findProduct)
             return {
                 ...findProduct,
-                // detail_order_id: prod.id,
                 size: prod.size,
                 quantity: prod.quantity,
                 rating: prod.rating,
-                discount: prod.discount
-
+                discount: prod.discount,
+                detail_order_id: prod.id, /* đây là id của bảng detail order, mục đích thêm trường này vào để dùng cho route đánh giá sản phẩm */
 
             }
         })
 
         return {
             ...i,
-            
             products: products_order
-
         }
     })
 
-    if(orders.length === 0) {
+    // if(orders.length === 0) {
+    //     result("Không tồn tại mã đơn "+id)
+    // }
+    // else {
+    //     result(id ? orders[0] :orders)
+    // }
+    if(id && orders.length === 0) {
         result("Không tồn tại mã đơn "+id)
     }
     else {
-        result(id ? orders[0] :orders)
+        result(id ? orders[0] : orders)
     }
 
 }
@@ -112,7 +134,7 @@ Orders.create = async (data, result) => {
             )
           
     
-            // console.log(get_product_Inventory)
+            console.log(get_product_Inventory)
     
             // CHECK ĐƠN HÀNG CÓ CÒN ĐỦ SỐ LƯỢNG ĐỂ BÁN 
             const messSoldOut = [] 
@@ -121,7 +143,9 @@ Orders.create = async (data, result) => {
                 let quantity_order = products[index].quantity
     
                 if(quantity_inventory - quantity_order < 0) {
-                    messSoldOut.push(`HẾT HÀNG: Sản phầm mã ${item.product_id}, size ${item.size}, còn ${quantity_inventory} SP, số lượng mua ${quantity_order}`)
+                    // messSoldOut.push(`Không đủ số lượng bán: Sản phầm mã ${item.product_id}, size ${item.size}, còn ${quantity_inventory} SP, số lượng mua ${quantity_order}`)
+                    // messSoldOut.push(`HẾT HÀNG: Sản phầm mã ${item.product_id}, size ${item.size}, còn ${quantity_inventory} SP, số lượng mua ${quantity_order}`)
+                    messSoldOut.push({"product_id": item.product_id, "message":`size ${item.size}, còn ${quantity_inventory} SP, số lượng mua ${quantity_order}`})
                 }
             });
             console.log(messSoldOut)
@@ -182,11 +206,11 @@ Orders.create = async (data, result) => {
                     });
                     
                 })
-                result("Đặt hàng thành công")
+                result({"message":"Đặt hàng thành công", "status":true})
     
             }
             else {
-                result(messSoldOut)
+                result({"message":messSoldOut, "status":false})
             }
     
     
@@ -310,5 +334,29 @@ Orders.rating = async (data, result) => {
     
 
 }
+
+Orders.revenueDay = async (_month, _year, result) => {
+    let d = new Date()
+    try {
+        // let sql = `
+        //     SELECT MONTH(date_order) as month , SUM(amount) as amount FROM orders 
+        //     WHERE year(date_order)=${_year || d.getFullYear()}
+        //     GROUP BY MONTH(date_order)
+        // `
+
+       let sql = `SELECT Day(date_order) as day , SUM(amount) as amount FROM orders 
+        WHERE MONTH(date_order)=${_month} AND YEAR(date_order)=${_year}
+        GROUP BY Day(date_order)`
+
+        let data = await sqlCustom.executeSql(sql)
+        result(data)
+        
+    } catch (error) {
+        console.log(error)
+        result(null)
+        throw error
+    }
+}
+
 
 module.exports = Orders
