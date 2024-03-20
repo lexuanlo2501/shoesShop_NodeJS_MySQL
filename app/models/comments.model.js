@@ -42,7 +42,7 @@ Comments.submit = async (data, result) => {
         `
     
         const dataFind = await sqlCustom.executeSql(sqlFind_orderDetail)
-        
+
         console.log(data)
         console.log(dataFind)
 
@@ -69,6 +69,7 @@ Comments.submit = async (data, result) => {
 Comments.remove = async (detailOrder_id, result) => {
     const execDel = await sqlCustom.executeSql(`DELETE FROM comments WHERE detailOrder_id = ${detailOrder_id}`)
     if(execDel.affectedRows !== 0) {
+        // Cập nhật lại trạng thái chưa comment trong detail_order
         await sqlCustom.executeSql(`UPDATE detail_order SET isComment = 0 WHERE id =${detailOrder_id}`)
         result({message:"Xóa bình luận thành công", status: true})
     }
@@ -76,6 +77,20 @@ Comments.remove = async (detailOrder_id, result) => {
         result({message:"Xóa bình luận thất bại", status: false})
     }
     console.log(execDel)
+}
+
+Comments.update = async (id, dataBody, result) => {
+    const execUpd = await sqlCustom.executeSql(`
+        UPDATE comments
+        SET value = '${dataBody.value}'
+        WHERE id = ${id}
+    `)
+    if(execUpd.changedRows) {
+        result({message:"Cập nhật bình luận thành công", status: true})
+    }
+    else {
+        result({message:"Cập nhật bình luận thất bại", status: false})
+    }
 }
 
 module.exports = Comments

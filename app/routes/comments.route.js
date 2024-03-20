@@ -3,5 +3,5 @@ module.exports = (router) => {
     router.get("/comments", commentController.get_comments)
     router.post("/comments", commentController.submit_comments)
     router.delete("/comments/:id", commentController.remove_comments)
-    router.patch("/comments/:id",)
+    router.patch("/comments/:id", commentController.update_comments)
 }

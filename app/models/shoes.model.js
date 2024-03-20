@@ -10,7 +10,7 @@ const sqlCustom = require('../common/sqlQuery')
 
 
 
-Shoes.get_all = async (result=() => {}, brand_id, query_) => {
+Shoes.get_all = async (result=() => {}, brand_id, query_ = {}) => {
     try {
         let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category} = query_
         console.log(query_)
@@ -31,7 +31,7 @@ Shoes.get_all = async (result=() => {}, brand_id, query_) => {
         sql = _category ?  sqlHaveCategory : sql
 
         // HANDLE QUERY PARAMETERS
-        if(sql.includes("WHERE")) sql = _brand ? sql + ` AND brand_id = ${_brand}` : sql
+        if(sql.includes("WHERE")) sql = _brand ? sql + ` AND brand_id = '${_brand}'` : sql
         else sql = _brand ? sql + ` WHERE brand_id = '${_brand}'` : sql
 
         if(sql.includes("WHERE")) sql = _type ? sql + ` AND type = ${+_type}` : sql

@@ -12,3 +12,7 @@ exports.submit_comments = (req, res) => {
 exports.remove_comments = (req, res) => {
     Comments.remove(req.params.id, response => res.status(200).send(response))
 }
+
+exports.update_comments = (req, res) => {
+    Comments.update(req.params.id, req.body, response => res.status(200).send(response))
+}
