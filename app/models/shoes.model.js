@@ -25,9 +25,8 @@ Shoes.get_all = async (result=() => {}, brand_id, query_ = {}) => {
             SELECT products.*, types.category_id, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate 
             FROM products
                 INNER JOIN types ON products.type = types.id
-            WHERE types.category_id = ${_category}
+            WHERE types.category_id = '${_category}'
         `
-
         sql = _category ?  sqlHaveCategory : sql
 
         // HANDLE QUERY PARAMETERS
@@ -99,6 +98,8 @@ Shoes.get_all = async (result=() => {}, brand_id, query_ = {}) => {
 
         return(combine)
     } catch (error) {
+        console.log("Error")
+        result({status:false})
         throw error;
     }
 };

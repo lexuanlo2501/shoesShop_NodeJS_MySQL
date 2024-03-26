@@ -32,7 +32,11 @@ module.exports = (router) => {
     router.get("/shoesList/:id", shoesController.find_list_shoes)
     router.get("/shoesList/", (_, res) => res.send([]));
 
-    router.post("/shoes_add",  _AuthMiddleWare.isAdmin, shoesController.add_shoes)
+    // temporary comment to add data from postman
+    // router.post("/shoes_add",  _AuthMiddleWare.isAdmin, shoesController.add_shoes)
+    router.post("/shoes_add",  shoesController.add_shoes)
+
+
     router.delete("/shoes_delete/:id", _AuthMiddleWare.isAdmin, shoesController.delete_shoes)
     router.patch("/shoes_update/:id", _AuthMiddleWare.isAdmin, shoesController.update_shoes)
 

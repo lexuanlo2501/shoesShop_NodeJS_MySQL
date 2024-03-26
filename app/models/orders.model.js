@@ -324,6 +324,11 @@ Orders.rating = async (data, result) => {
     //     rating: 5
     // }
     try {
+        if(data.rating > 5 || data.rating < 1) {
+            result("Vui lòng nhập số sao từ 1-5")
+            return 
+        }
+
         await sqlCustom.executeSql_value("UPDATE detail_order SET rating = ? WHERE id = ?", [data.rating, data.detail_order_id])
         result("Đánh giá sản phẩm thành công, cảm ơn bạn đã phản hồi cho chúng tôi")
     } catch (error) {
