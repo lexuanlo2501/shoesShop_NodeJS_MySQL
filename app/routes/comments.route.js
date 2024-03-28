@@ -6,4 +6,8 @@ module.exports = (router) => {
     router.patch("/comments/:id", commentController.update_comments)
     router.post("/checkPermitCmt", commentController.check_permit)
 
+    // REPLY
+    router.post("/replyComments", commentController.reply_comments)
+    router.delete("/replyComments/:id", commentController.remove_reply)
+
 }

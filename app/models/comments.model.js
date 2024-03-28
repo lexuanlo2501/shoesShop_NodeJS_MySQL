@@ -1,3 +1,4 @@
+const sql = require('msnodesqlv8')
 const sqlCustom = require('../common/sqlQuery')
 
 const Comments = () => {}
@@ -7,11 +8,11 @@ Comments.getAll = async (_query, result) => {
     try {
         // console.log(_productId)
         let sql = `
-            SELECT comments.id as comment_id, comments.detailOrder_id, client_id, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
+            SELECT seller_id, comments.id as comment_id, comments.detailOrder_id, client_id, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
             FROM comments 
                 inner join detail_order on detail_order.id = comments.detailOrder_id
                 inner join orders on detail_order.order_id = orders.id
-           
+                inner join products on products.id = detail_order.product_id
         `
         _productId ?  sql += ` WHERE product_id = ${_productId}` : sql 
         sql += " ORDER BY comments.id DESC"
@@ -22,12 +23,13 @@ Comments.getAll = async (_query, result) => {
         const comment = await sqlCustom.executeSql(sql )
 
         if(_productId) {
-            let Comments_reply = await Promise.all(comment.map(async i => (
-                {
-                    ...i, 
-                    reply: (await sqlCustom.executeSql(`SELECT *, DATE_FORMAT(date, '%d/%m/%Y %r') as date FROM replycomment WHERE comment_id='${i.comment_id}'`)).map(row => ({...row}))
+            let Comments_reply = await Promise.all(comment.map(async i => {
+                const {seller_id, ...restData} = i
+                return {
+                    ...restData, 
+                    reply: (await sqlCustom.executeSql(`SELECT *, DATE_FORMAT(date, '%d/%m/%Y %r') as date FROM replycomment WHERE comment_id='${i.comment_id}' ORDER BY id DESC`)).map(row => ({...row, "seller_id":i.seller_id}))
                 }
-            )))
+            }))
             result(Comments_reply)
             return 
         }
@@ -149,15 +151,34 @@ Comments.update = async (id, dataBody, result) => {
       
 }
 
-Comments.reply = async (dataBody, result) => {
+Comments.replyComments = async (dataBody, result) => {
     const {comment_id, value} = dataBody
     try {
-        const addReply = await sqlCustom.executeSql(`INSERT INTO replycomment SET value=${value} WHERE id = '${comment_id}'`)
+        const addReply = await sqlCustom.executeSql(`INSERT INTO replycomment (value, comment_id) VALUES ('${value}', '${comment_id}') `)
         console.log(addReply)
+        result({message:"Gửi phản hồi thành công", status: true})
     } catch (error) {
         result(null)
         throw error
     }
 }
+
+Comments.removeReply = async (id, result) => {
+    try {
+        const deleteData = await sqlCustom.executeSql(`DELETE FROM replycomment WHERE id='${id}'`)
+        if(deleteData.affectedRows !== 0) {
+            result({message:"Xóa bình luận thành công", status: true})
+        }
+        else if(deleteData.affectedRows === 0) {
+            result({message:"Xóa bình luận thất bại", status: false})
+        }
+
+    } catch (error) {
+        result(null)
+        throw error
+    }
+}
+
+
 
 module.exports = Comments

@@ -19,3 +19,24 @@ exports.update_comments = (req, res) => {
 exports.check_permit = (req, res) => {
     Comments.checkPermit(req.body, response => res.status(200).send(response))
 }
+
+
+// REPLY
+
+exports.reply_comments = (req, res) => {
+    try {
+        Comments.replyComments(req.body, response => res.status(200).send(response))
+    } catch (error) {
+        res.status(500).json("Lỗi server")
+        throw error
+    }
+}
+
+exports.remove_reply = (req, res) => {
+    try {
+        Comments.removeReply(req.params.id, response => res.status(200).send(response))
+    } catch (error) {
+        res.status(500).json("Lỗi server")
+        throw error
+    }
+}
