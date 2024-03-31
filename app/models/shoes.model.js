@@ -10,15 +10,11 @@ const sqlCustom = require('../common/sqlQuery')
 
 
 
-Shoes.get_all = async (result=() => {}, brand_id, query_ = {}) => {
+Shoes.get_all = async (query_ = {}, result=() => {}) => {
     try {
-        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category} = query_
+        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId} = query_
+        console.log("*--- Query ---*")
         console.log(query_)
-
-        // let sql = brand_id ? 
-        // `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products WHERE brand_id = '${brand_id.toUpperCase()}'` 
-        // : 
-        // `SELECT *, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`;
 
         let sql = `SELECT *,  DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`
         let sqlHaveCategory = `
@@ -30,6 +26,27 @@ Shoes.get_all = async (result=() => {}, brand_id, query_ = {}) => {
         sql = _category ?  sqlHaveCategory : sql
 
         // HANDLE QUERY PARAMETERS
+        if(_sellerId) {
+            sql = sql.includes("WHERE") ? sql + ` AND seller_id='${_sellerId}'` : sql + ` WHERE seller_id='${_sellerId}'`
+        }
+        else {
+
+            if(_C2C==="true") {
+                if(sql.includes("WHERE")) sql = sql + ` AND seller_id IS NOT NULL`
+                else sql = sql + ` WHERE seller_id IS NOT NULL`
+            }
+            else if (_C2C==="false") {
+                if(sql.includes("WHERE")) sql = sql + ` AND seller_id IS NULL`
+                else sql = sql + ` WHERE seller_id IS NULL`
+            }
+            else if (_C2C==="all") {
+                // DÙNG ĐỂ HIỂN THỊ ĐƠN HÀNG CỦA KHÁCH HÀNG (KHÔNG PHÂN BIỆT B2C HAY C2C)
+            }
+            
+        }
+
+      
+
         if(sql.includes("WHERE")) sql = _brand ? sql + ` AND brand_id = '${_brand}'` : sql
         else sql = _brand ? sql + ` WHERE brand_id = '${_brand}'` : sql
 

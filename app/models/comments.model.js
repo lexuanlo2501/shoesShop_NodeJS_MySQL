@@ -8,11 +8,13 @@ Comments.getAll = async (_query, result) => {
     try {
         // console.log(_productId)
         let sql = `
-            SELECT seller_id, comments.id as comment_id, comments.detailOrder_id, client_id, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
+            SELECT seller_id, comments.id as comment_id, comments.detailOrder_id, fullName, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
             FROM comments 
                 inner join detail_order on detail_order.id = comments.detailOrder_id
                 inner join orders on detail_order.order_id = orders.id
                 inner join products on products.id = detail_order.product_id
+                inner join accounts on accounts.accName = client_id
+
         `
         _productId ?  sql += ` WHERE product_id = ${_productId}` : sql 
         sql += " ORDER BY comments.id DESC"
@@ -27,7 +29,7 @@ Comments.getAll = async (_query, result) => {
                 const {seller_id, ...restData} = i
                 return {
                     ...restData, 
-                    reply: (await sqlCustom.executeSql(`SELECT *, DATE_FORMAT(date, '%d/%m/%Y %r') as date FROM replycomment WHERE comment_id='${i.comment_id}' ORDER BY id DESC`)).map(row => ({...row, "seller_id":i.seller_id}))
+                    reply: (await sqlCustom.executeSql(`SELECT *, DATE_FORMAT(date, '%d/%m/%Y %r') as date FROM replycomment WHERE comment_id='${i.comment_id}' ORDER BY id DESC`))
                 }
             }))
             result(Comments_reply)
@@ -151,6 +153,8 @@ Comments.update = async (id, dataBody, result) => {
       
 }
 
+// REPLY
+
 Comments.replyComments = async (dataBody, result) => {
     const {comment_id, value} = dataBody
     try {
@@ -167,10 +171,10 @@ Comments.removeReply = async (id, result) => {
     try {
         const deleteData = await sqlCustom.executeSql(`DELETE FROM replycomment WHERE id='${id}'`)
         if(deleteData.affectedRows !== 0) {
-            result({message:"Xóa bình luận thành công", status: true})
+            result({message:"Xóa phản hồi thành công", status: true})
         }
         else if(deleteData.affectedRows === 0) {
-            result({message:"Xóa bình luận thất bại", status: false})
+            result({message:"Xóa phản hồi thất bại", status: false})
         }
 
     } catch (error) {

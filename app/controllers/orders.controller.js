@@ -2,10 +2,9 @@ const { response } = require("express")
 const Orders = require("../models/orders.model")
 
 exports.get_orders = (req, res) => {
-    const {_client_id, _status, _day, _month, _year} = req.query
     Orders.get(response => {
         res.send(response)
-    }, req.params.id, _client_id, _status, _day, _month, _year)
+    }, req.params.id, req.query)
 }
 
 exports.create_orders = (req, res) => {

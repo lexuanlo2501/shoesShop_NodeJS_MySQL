@@ -165,3 +165,40 @@ exports.requestRefreshToken_v2 = async(req, res) => {
         res.status(500).json("refreshToken không hợp lệ")
     }
 }
+
+// ADDRESS
+
+exports.get_address = (req, res) => {
+    try {
+        Accounts.getAddress(req.params.id, response => {
+            res.status(200).json(response)
+        })
+    } catch (error) {
+        res.status(500).json("err")
+        throw error
+    }
+}
+
+exports.add_address = (req, res) => {
+    try {
+        Accounts.addAddress(req.body, response => {
+            res.status(200).json(response)
+        })
+    } catch (error) {
+        res.status(500).json("err")
+        throw error
+    }
+}
+
+exports.del_address = (req, res) => {
+    try {
+        Accounts.delAddress(req.params.id, response => {
+            res.status(200).json(response)
+        })
+    } catch (error) {
+        res.status(500).json("err")
+        throw error
+    }
+}
+
+

@@ -10,12 +10,31 @@ const sqlCustom = require('../common/sqlQuery')
 
 
 
-Orders.get = async (result, id, _client_id, _status, _day, _month, _year) => {
+Orders.get = async (result, id, _query) => {
+
+    const {_client_id, _status, _day, _month, _year, _sellerId} = _query
+
+    let sql = "SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders"
+
+    if(_sellerId) {
+        sql = `SELECT orders.*, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order 
+            FROM orders
+            INNER JOIN detail_order ON detail_order.order_id = orders.id
+            INNER JOIN products ON detail_order.product_id = products.id
+            WHERE products.seller_id='${_sellerId}'
+
+        `
+    }
+    else {
+        sql = id ? 
+        `SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders WHERE id='${id}'`
+        :
+        sql
+
+    }
    
-    let sql = id ? 
-    `SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders WHERE id='${id}'`
-    :
-    "SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders"
+
+    
 
     if(_client_id) {
         if(sql.includes("WHERE")) {
@@ -25,6 +44,7 @@ Orders.get = async (result, id, _client_id, _status, _day, _month, _year) => {
             sql = sql + ` WHERE client_id = '${_client_id}'`
         }
     }
+
 
 
 
@@ -62,7 +82,7 @@ Orders.get = async (result, id, _client_id, _status, _day, _month, _year) => {
     
 
     const shoesModel = require("../models/shoes.model")
-    const dataFind = await shoesModel.get_all()
+    const dataFind = await shoesModel.get_all({_C2C:"all"})
 
     // const dataFind_list = await shoesModel.find(100)
     // console.log(dataFind_list)

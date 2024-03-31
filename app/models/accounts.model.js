@@ -33,11 +33,12 @@ Accounts.get = async (result, id) => {
                 FROM products A, discount B 
                 WHERE A.id IN (${infor_acc.favorite.toString() || 0}) AND A.discount_id = B.id
             `)
-            console.log(favorite_list)
+
+            const address_list = await sqlCustom.executeSql(`SELECT addressName FROM address WHERE accName='${id}'`)
 
            
             infor_acc.favorite = favorite_list
-            
+            infor_acc.addresses = address_list.map(i => i.addressName)
         }
         result(infor_acc)
 
@@ -232,6 +233,57 @@ Accounts.rating = async (data, result) => {
 }
 
 
+// ADDRESS
+
+Accounts.getAddress = async (id, result) => {
+    try {
+        const address_list = await sqlCustom.executeSql(`SELECT id, addressName FROM address WHERE accName='${id}'`)
+        result(address_list)
+
+    } catch (error) {
+        result(null)
+        throw error
+    }
+}
+
+Accounts.addAddress = async (dataBody, result) => {
+    try {
+        const {addressName, accName} = dataBody
+        if(!addressName || !accName) {
+            result({message:"Bạn gửi thiếu tham số, yêu cầu addressName, accName", status:false})
+            return
+        }
+            
+        const dataAdd = await sqlCustom.executeSql_value(`INSERT INTO address SET ?`, {addressName: addressName, accName: accName})
+        if(dataAdd.affectedRows) {
+            result({message:"Xóa địa chỉ thành công", status:true})
+        }
+        else {
+            result({message:"Xóa địa chỉ thất bại", status:false})
+        }
+      
+      
+    } catch (error) {
+        result(null)
+        throw error
+    }
+}
+
+Accounts.delAddress = async  (id, result) => {
+    try {
+        const dataDel = await sqlCustom.executeSql(`DELETE FROM address WHERE id='${id}'`)
+        if(dataDel.affectedRows) {
+            result({message:"Thêm địa chỉ thành công", status:true})
+        }
+        else {
+            result({message:"Thêm địa chỉ thất bại", status:false})
+        }
+
+    } catch (error) {
+         result(null)
+        throw error
+    }
+}
 
 
 module.exports = Accounts

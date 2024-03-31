@@ -3,10 +3,10 @@ const Shoes = require("../models/shoes.model")
 const fs = require('fs')
 
 exports.get_all_shoes = (req, res) => {
-    Shoes.get_all((response) => {
+    Shoes.get_all(req.query, (response) => {
         res.setHeader("X-Total-Count", +response.count);
         res.send(response.shoes)
-    },req.params.br_id, req.query)
+    })
     
 }
 

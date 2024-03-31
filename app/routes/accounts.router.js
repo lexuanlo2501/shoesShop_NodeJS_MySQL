@@ -22,6 +22,12 @@ module.exports = (router) => {
 
     router.post("/signin_2", accountsController.signIn_2)
 
+    router.get("/addresses/:id", accountsController.get_address)
+    router.post("/addresses", accountsController.add_address)
+    router.delete("/addresses/:id", accountsController.del_address)
+
+
+
     // router.post("/rating", accountsController.rating_product)
 
 
