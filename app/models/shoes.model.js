@@ -12,11 +12,14 @@ const sqlCustom = require('../common/sqlQuery')
 
 Shoes.get_all = async (query_ = {}, result=() => {}) => {
     try {
-        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId} = query_
+        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId, _ids} = query_
+        // _ids is support for find list
+        
         console.log("*--- Query ---*")
         console.log(query_)
 
         let sql = `SELECT *,  DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`
+        
         let sqlHaveCategory = `
             SELECT products.*, types.category_id, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate 
             FROM products
@@ -45,7 +48,10 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
             
         }
 
-      
+        if(_ids) {
+            sql = sql.includes("WHERE") ? sql + ` AND id IN (${_ids})` : sql + ` WHERE id in (${_ids})`
+        }
+        
 
         if(sql.includes("WHERE")) sql = _brand ? sql + ` AND brand_id = '${_brand}'` : sql
         else sql = _brand ? sql + ` WHERE brand_id = '${_brand}'` : sql
@@ -78,11 +84,10 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
                 }
             });
         });
+
         const shoes_id = shoes.map(i => i.id).toString()
         // executeSql_all
 
-        // const inventory = await sqlCustom.executeSql_SelectAll('inventory')
-        // const imgs = await sqlCustom.executeSql_SelectAll('imgs')
         const inventory = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id IN (${shoes_id || 0})`)
         const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id IN (${shoes_id || 0})`)
         const discounts = await sqlCustom.executeSql_SelectAll('discount')
@@ -113,6 +118,9 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         // result(combine)
         result({shoes:combine, count:countQuery[0].totalCount})
 
+        if(_ids) {
+            return {shoes:combine, count:countQuery[0].totalCount}
+        }
         return(combine)
     } catch (error) {
         console.log("Error")
@@ -165,43 +173,10 @@ Shoes.find = async (id, result=()=>{}) => {
 
 Shoes.findList = async (ids="d", result=()=>{},  _page=0, _limit=0,) => {
     // console.log(ids)
-    function removeDuplicates(array) {
-        const duplicates = array.filter((value, index, self) => {
-          return self.indexOf(value) === index;
-        });
-        return [...new Set(duplicates)];
-    }
+    let products = await Shoes.get_all({_ids:ids, _page , _limit})
 
-    let listID = ids.split(",").map(i => +i)
-    listID = removeDuplicates(listID)
-    // console.log(listID)
-    // Xóa phần tử đầu tiên trong mãng ids (vì fix cứng ở client phần tử đầu tiêu là số 0) 
-    // ...
-    if(listID[0] === 0) listID.shift()
-    
-
-    if(_page && _limit) {
-        // phân mảng để phân trang
-        listID =  listID.splice(_limit*(_page-1), _limit)
-    }
-    let products = []
-
-    for (const id of listID) {
-        const shoes =  await Shoes.find(id)
-        if(shoes !== null && shoes !== undefined) {
-            products.push(shoes)
-        }
-    }
-     // GET X-Total-Count
-    let sql = `SELECT * FROM products WHERE id IN (${ids})`
-    sql = _page && _limit ? sql + ` LIMIT ${_limit} OFFSET ${_limit*(_page-1)}` : sql
-
-     let sqlGetXTotalCount = sql.split("LIMIT")[0].replace("*", "COUNT(*) AS totalCount")
-        
-     const countQuery = await sqlCustom.executeSql(sqlGetXTotalCount)
-    
-     result({shoes:products, count:countQuery[0].totalCount})
-     return(products)
+    result({shoes:products.shoes, count:products.count})
+    return(products)
 }
 
 
@@ -271,8 +246,8 @@ Shoes.delete = async (id, result) => {
         //     handleDeleteFileImg(filename)
         // });
         imgsInDB = [...imgsInDB.map(img => img.name), product[0].img]
-        console.log(product)
-        console.log(imgsInDB)
+        // console.log(product)
+        // console.log(imgsInDB)
 
 
         imgsInDB.forEach((filename) => {
@@ -355,7 +330,7 @@ Shoes.update = (id, data, result) => {
     const {inventory=[],imgs=[], ...restData} = data
     db.query(Object.keys(restData).length ? 'UPDATE products SET ?  WHERE id=?':"select * from brands", [restData, id], (err, shoes) => {
         if(err) {
-            console.log(restData)
+            // console.log(restData)
             throw err
         }
         inventory.forEach(element => {
@@ -366,7 +341,7 @@ Shoes.update = (id, data, result) => {
         });
         
         const imgs_update = [...imgs].map(i => [i, id])
-        console.log(imgs)
+        // console.log(imgs)
         if(imgs.length) {
             // DELETE ALL IMG HAVE ID = id
             db.query("DELETE FROM imgs WHERE product_id = ?",id, err => {

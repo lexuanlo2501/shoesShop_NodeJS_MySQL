@@ -74,6 +74,7 @@ Orders.get = async (result, id, _query) => {
     })
 
     const detail = id ? await sqlCustom.executeSql(`SELECT * FROM detail_order WHERE order_id = ${id}`) : await sqlCustom.executeSql("SELECT * FROM detail_order")
+    console.log(detail)
 
     const filerOrder = (arr, id) => {
         return arr.filter(i => i.order_id === id)
