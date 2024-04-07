@@ -49,7 +49,7 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         }
 
         if(_ids) {
-            sql = sql.includes("WHERE") ? sql + ` AND id IN (${_ids})` : sql + ` WHERE id in (${_ids})`
+            sql += sql.includes("WHERE") ? ` AND id IN (${_ids})` : ` WHERE id in (${_ids})`
         }
         
 

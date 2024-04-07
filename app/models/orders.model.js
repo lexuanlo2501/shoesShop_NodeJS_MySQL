@@ -12,7 +12,7 @@ const sqlCustom = require('../common/sqlQuery')
 
 Orders.get = async (result, id, _query) => {
 
-    const {_client_id, _status, _day, _month, _year, _sellerId} = _query
+    const {_clientId, _status, _day, _month, _year, _sellerId} = _query
 
     let sql = "SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders"
 
@@ -36,12 +36,12 @@ Orders.get = async (result, id, _query) => {
 
     
 
-    if(_client_id) {
+    if(_clientId) {
         if(sql.includes("WHERE")) {
-            sql = sql + ` AND client_id = '${_client_id}'`
+            sql = sql + ` AND client_id = '${_clientId}'`
         }
         else {
-            sql = sql + ` WHERE client_id = '${_client_id}'`
+            sql = sql + ` WHERE client_id = '${_clientId}'`
         }
     }
 
@@ -73,34 +73,42 @@ Orders.get = async (result, id, _query) => {
         })
     })
 
-    const detail = id ? await sqlCustom.executeSql(`SELECT * FROM detail_order WHERE order_id = ${id}`) : await sqlCustom.executeSql("SELECT * FROM detail_order")
+    let sqlDetailOrder = " SELECT detail_order.* FROM detail_order"
+
+    if(id) {
+        sqlDetailOrder +=  sqlDetailOrder.includes("WHERE") ? ` AND order_id = ${id}` :  ` WHERE order_id = ${id}`
+    }
+    if(_clientId) {
+        sqlDetailOrder = `
+            SELECT detail_order.* FROM detail_order
+            INNER JOIN orders on  orders.id = detail_order.order_id
+            WHERE orders.client_id = '${_clientId}'
+        `
+    }
+
+    const detail = await sqlCustom.executeSql(sqlDetailOrder)
     console.log(detail)
 
     const filerOrder = (arr, id) => {
         return arr.filter(i => i.order_id === id)
     }
 
-    
-
     const shoesModel = require("../models/shoes.model")
-    const dataFind = await shoesModel.get_all({_C2C:"all"})
 
-    // const dataFind_list = await shoesModel.find(100)
-    // console.log(dataFind_list)
-
-    
+    const productID_list = (detail.map(i => i.product_id)).toString()
+    const productsFind = (await shoesModel.get_all({_C2C:"all", _ids:productID_list})).shoes || []
+    console.log(productsFind)
     
     let orders = [...ord].map( i => {
         let products_order =  filerOrder(detail, i.id).map( (prod) => {
-            const findProduct  = dataFind.find(product => product.id === prod.product_id)
-            console.log(findProduct)
+            const findProduct  = productsFind.find(product => product.id === prod.product_id)
             return {
                 ...findProduct,
                 size: prod.size,
                 quantity: prod.quantity,
                 rating: prod.rating,
                 discount: prod.discount,
-                detail_order_id: prod.id, /* đây là id của bảng detail order, mục đích thêm trường này vào để dùng cho route đánh giá sản phẩm */
+                detail_order_id: prod.id, /* Đây là id của bảng detail order, mục đích thêm trường này vào để dùng cho route đánh giá sản phẩm */
 
             }
         })
