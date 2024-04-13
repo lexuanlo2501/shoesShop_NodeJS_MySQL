@@ -148,8 +148,14 @@ Accounts.signIn = async (data, result) => {
 Accounts.update = async (id,data, result) => {
     try {
         if(!data.email && !data.accName && !data.phoneNumber) {
-            await sqlCustom.executeSql_value(`UPDATE accounts SET ? WHERE accName='${id}'`, data)
-            result('Cập nhật thành công')
+            const excute = await sqlCustom.executeSql_value(`UPDATE accounts SET ? WHERE accName='${id}'`, data)
+            console.log(excute)
+            if(excute.affectedRows) {
+                result({status:true,message:'Cập nhật thành công'})
+            }
+            else{
+                result({status:false,message:'Cập nhật thất bại'})
+            }
         }
         else {
             result('Chưa có tính năng thay đổi thông như: Số điện thoại, tên tài khoản, email')
