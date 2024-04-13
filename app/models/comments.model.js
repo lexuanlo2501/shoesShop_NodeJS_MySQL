@@ -55,7 +55,6 @@ Comments.checkPermit = async (data, result) => {
             WHERE detail_order.product_id = ${product_id} AND orders.client_id = '${accName}' AND isComment = 0
         `
         const dataFind = await sqlCustom.executeSql(sqlFind_orderDetail)
-        console.log(dataFind)
         if(dataFind.length) {
             result({message:"Được phép cmt", status:true})
         }

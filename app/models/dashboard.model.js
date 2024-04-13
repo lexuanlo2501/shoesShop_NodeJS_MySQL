@@ -14,10 +14,10 @@ Dashboard.get = async (_year,result) => {
             ORDER BY SUM(quantity) DESC
             LIMIT 3`
         )
-
+        console.log(hot_product)
         const shoesModel = require("../models/shoes.model")
-        const dataFind_shoes = await shoesModel.findList(hot_product.map(i => i.product_id).toString()||"0")
-        // console.log(dataFind_shoes)
+        const dataFind_shoes = (await shoesModel.findList(hot_product.map(i => i.product_id).toString()||"0")).shoes
+        console.log(dataFind_shoes)
 
         const accounts = await executeSql(`SELECT COUNT(*) as number FROM accounts`)
 
@@ -54,7 +54,7 @@ Dashboard.get = async (_year,result) => {
        
         
         result({
-            "hot_product":hot_product.map(i => ({...i, ...dataFind_shoes.find(shoes=>shoes.id===i.product_id)})),
+            "hot_product":hot_product.map(i => ({...i, ...dataFind_shoes?.find(shoes=>shoes.id===i.product_id)})),
             "number_accounts":accounts[0].number,
             "most_purchAcc": mostPurchAcc,
             "order_brand_pay": order_brand_pay,
