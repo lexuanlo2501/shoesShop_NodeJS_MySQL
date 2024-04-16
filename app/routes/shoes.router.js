@@ -38,7 +38,7 @@ module.exports = (router) => {
 
 
     router.delete("/shoes_delete/:id", _AuthMiddleWare.isAdmin, shoesController.delete_shoes)
-    router.patch("/shoes_update/:id", _AuthMiddleWare.isAdmin, shoesController.update_shoes)
+    router.patch("/shoes_update/:id", _AuthMiddleWare.isAunth_sellerAdmin, shoesController.update_shoes)
 
     router.post("/import_prod", _AuthMiddleWare.isAdmin, shoesController.im_export_prod)
     router.post("/modify_discount", shoesController.modify_discount)
