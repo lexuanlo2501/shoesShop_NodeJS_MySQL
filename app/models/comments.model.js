@@ -8,7 +8,7 @@ Comments.getAll = async (_query, result) => {
     try {
         // console.log(_productId)
         let sql = `
-            SELECT seller_id, comments.id as comment_id, comments.detailOrder_id, fullName, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
+            SELECT accounts.accName, seller_id, comments.id as comment_id, comments.detailOrder_id, fullName, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
             FROM comments 
                 inner join detail_order on detail_order.id = comments.detailOrder_id
                 inner join orders on detail_order.order_id = orders.id
