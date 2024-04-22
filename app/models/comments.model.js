@@ -110,23 +110,34 @@ Comments.submit = async (data, result) => {
    
 }
 
-Comments.remove = async (detailOrder_id, result) => {
+Comments.remove = async (id, result) => {
     try {
-        const findCmt = (await sqlCustom.executeSql(`
-            SELECT comments.id FROM comments
+        // const findCmt = (await sqlCustom.executeSql(`
+        //     SELECT comments.id FROM comments
+        //     INNER JOIN detail_order ON comments.detailOrder_id = detail_order.id
+        //     WHERE comments.detailOrder_id = ${detailOrder_id}  
+        // `))[0]
+        // if(!findCmt?.id) {
+        //     result(null)
+        //     return
+        // }
+
+        const findDetailOrder = (await sqlCustom.executeSql(`
+            SELECT comments.id, comments.detailOrder_id FROM comments
             INNER JOIN detail_order ON comments.detailOrder_id = detail_order.id
-            WHERE comments.detailOrder_id = ${detailOrder_id}  
+            WHERE comments.id = ${id}  
         `))[0]
-        if(!findCmt?.id) {
+        if(!findDetailOrder?.id) {
             result(null)
             return
         }
-        const execDel_reply = await sqlCustom.executeSql(`DELETE FROM replycomment WHERE comment_id = ${findCmt.id}`)
 
-        const execDel_cmt = await sqlCustom.executeSql(`DELETE FROM comments WHERE detailOrder_id = ${detailOrder_id}`)
+        const execDel_reply = await sqlCustom.executeSql(`DELETE FROM replycomment WHERE comment_id = ${id}`)
+
+        const execDel_cmt = await sqlCustom.executeSql(`DELETE FROM comments WHERE id = ${id}`)
         if(execDel_cmt.affectedRows !== 0) {
             // Cập nhật lại trạng thái chưa comment trong detail_order
-            await sqlCustom.executeSql(`UPDATE detail_order SET isComment = 0 WHERE id =${detailOrder_id}`)
+            await sqlCustom.executeSql(`UPDATE detail_order SET isComment = 0 WHERE id =${findDetailOrder.detailOrder_id}`)
             result({message:"Xóa bình luận thành công", status: true})
         }
         else if(execDel_cmt.affectedRows === 0) {
@@ -168,9 +179,16 @@ Comments.replyComments = async (dataBody, result) => {
     const {comment_id, value} = dataBody
     try {
         const addReply = await sqlCustom.executeSql(`INSERT INTO replycomment (value, comment_id) VALUES ('${value}', '${comment_id}') `)
-        console.log(addReply)
-        result({message:"Gửi phản hồi thành công", status: true})
+        // console.log({reply: addReply})
+        if(addReply.affectedRows) {
+            result({message:"Gửi phản hồi thành công", status: true})
+        }
+        else {
+            result({message:"Gửi phản hồi thất bại", status: false})
+
+        }
     } catch (error) {
+       
         result(null)
         throw error
     }
