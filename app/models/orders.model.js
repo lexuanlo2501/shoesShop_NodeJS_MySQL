@@ -87,7 +87,7 @@ Orders.get = async (result, id, _query) => {
     }
 
     const detail = await sqlCustom.executeSql(sqlDetailOrder)
-    console.log(detail)
+    // console.log(detail)
 
     const filerOrder = (arr, id) => {
         return arr.filter(i => i.order_id === id)
@@ -97,7 +97,7 @@ Orders.get = async (result, id, _query) => {
 
     const productID_list = (detail.map(i => i.product_id)).toString()
     const productsFind = (await shoesModel.get_all({_C2C:"all", _ids:productID_list})).shoes || []
-    console.log(productsFind)
+    // console.log(productsFind)
     
     let orders = [...ord].map( i => {
         let products_order =  filerOrder(detail, i.id).map( (prod) => {
@@ -138,7 +138,7 @@ Orders.create = async (data, result) => {
     // data gửi từ client qua body nếu có thuộc tính id thì đó là thanh toán VNP
 
     const checkIdOrders = await sqlCustom.executeSql(`SELECT id  FROM orders WHERE id='${data.id}'`)
-    console.log(checkIdOrders)
+    // console.log(checkIdOrders)
 
     if(checkIdOrders.length===0) {
         try {
@@ -163,7 +163,7 @@ Orders.create = async (data, result) => {
             )
           
     
-            console.log(get_product_Inventory)
+            // console.log(get_product_Inventory)
     
             // CHECK ĐƠN HÀNG CÓ CÒN ĐỦ SỐ LƯỢNG ĐỂ BÁN 
             const messSoldOut = [] 
@@ -177,7 +177,7 @@ Orders.create = async (data, result) => {
                     messSoldOut.push({"product_id": item.product_id, "message":`size ${item.size}, còn ${quantity_inventory} SP, số lượng mua ${quantity_order}`})
                 }
             });
-            console.log(messSoldOut)
+            // console.log(messSoldOut)
     
             if(messSoldOut.length === 0) {
                 // THÊM VÀO BẢNG orders vào đặt biến promise đế lấy ra insertId từ data vừa thêm
@@ -325,11 +325,9 @@ Orders.update = async (id, data, result) => {
     try {
         const {...restData} = data
         const sqlUpdate = await sqlCustom.executeSql_value("UPDATE orders SET ? WHERE id = ?", [restData, id])
-        console.log(sqlUpdate)
 
         if(restData.status === 2) {
             accName = await sqlCustom.executeSql(`SELECT client_id FROM orders WHERE id = ${id}`)
-            console.log(accName)
             // db.query("INSERT INTO detail_order (order_id, product_id, size, quantity, discount) VALUES ?", [values], (err) => {
             // db.query("INSERT INTO orders SET ?",{...restData, amount:amount}, (err, order_ins) => {
             let content = "Đơn hàng đã được xác nhận. Đơn vị vận chuyển đang giao hàng đến bạn"

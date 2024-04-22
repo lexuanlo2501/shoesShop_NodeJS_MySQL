@@ -14,7 +14,6 @@ Comments.getAll = async (_query, result) => {
                 inner join orders on detail_order.order_id = orders.id
                 inner join products on products.id = detail_order.product_id
                 inner join accounts on accounts.accName = client_id
-
         `
         _productId ?  sql += ` WHERE product_id = ${_productId}` : sql 
         sql += " ORDER BY comments.id DESC"
@@ -113,16 +112,27 @@ Comments.submit = async (data, result) => {
 
 Comments.remove = async (detailOrder_id, result) => {
     try {
-        const execDel = await sqlCustom.executeSql(`DELETE FROM comments WHERE detailOrder_id = ${detailOrder_id}`)
-        if(execDel.affectedRows !== 0) {
+        const findCmt = (await sqlCustom.executeSql(`
+            SELECT comments.id FROM comments
+            INNER JOIN detail_order ON comments.detailOrder_id = detail_order.id
+            WHERE comments.detailOrder_id = ${detailOrder_id}  
+        `))[0]
+        if(!findCmt?.id) {
+            result(null)
+            return
+        }
+        const execDel_reply = await sqlCustom.executeSql(`DELETE FROM replycomment WHERE comment_id = ${findCmt.id}`)
+
+        const execDel_cmt = await sqlCustom.executeSql(`DELETE FROM comments WHERE detailOrder_id = ${detailOrder_id}`)
+        if(execDel_cmt.affectedRows !== 0) {
             // Cập nhật lại trạng thái chưa comment trong detail_order
             await sqlCustom.executeSql(`UPDATE detail_order SET isComment = 0 WHERE id =${detailOrder_id}`)
             result({message:"Xóa bình luận thành công", status: true})
         }
-        else if(execDel.affectedRows === 0) {
+        else if(execDel_cmt.affectedRows === 0) {
             result({message:"Xóa bình luận thất bại", status: false})
         }
-        // console.log(execDel)
+        // console.log(execDel_cmt)
     } catch (error) {
         result(null)
         throw error

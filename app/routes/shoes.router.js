@@ -33,12 +33,12 @@ module.exports = (router) => {
     router.get("/shoesList/", (_, res) => res.send([]));
 
     // temporary comment to add data from postman
-    // router.post("/shoes_add",  _AuthMiddleWare.isAdmin, shoesController.add_shoes)
-    router.post("/shoes_add",  shoesController.add_shoes)
+    // router.post("/shoes_add",  shoesController.add_shoes)
+    router.post("/shoes_add",  _AuthMiddleWare.isAdminSeller, shoesController.add_shoes)
 
 
-    router.delete("/shoes_delete/:id", _AuthMiddleWare.isAunth_sellerAdmin, shoesController.delete_shoes)
-    router.patch("/shoes_update/:id", _AuthMiddleWare.isAunth_sellerAdmin, shoesController.update_shoes)
+    router.delete("/shoes_delete/:id", _AuthMiddleWare.isAunthUpdProd_sellerAdmin, shoesController.delete_shoes)
+    router.patch("/shoes_update/:id", _AuthMiddleWare.isAunthUpdProd_sellerAdmin, shoesController.update_shoes)
 
     router.post("/import_prod", _AuthMiddleWare.isAdmin, shoesController.im_export_prod)
     router.post("/modify_discount", shoesController.modify_discount)

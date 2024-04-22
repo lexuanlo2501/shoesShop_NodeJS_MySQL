@@ -23,11 +23,12 @@ function sortObject(obj) {
 module.exports = (router) => {
 
     const ordersController = require("../controllers/orders.controller")
-    router.get("/orders", ordersController.get_orders)
-    router.get("/orders/:id", ordersController.get_orders)
-    router.post("/orders", _AuthMiddleWare.isAuth,ordersController.create_orders)
-    router.delete("/orders/:id", ordersController.delete_orders)
-    router.patch("/orders/:id", ordersController.update_orders)
+    // router.get("/orders", ordersController.get_orders)
+    router.get("/orders", _AuthMiddleWare.isAunthOrders_userAdmin, ordersController.get_orders)
+    router.get("/orders/:id", _AuthMiddleWare.isAunthOrders_userAdmin, ordersController.get_orders)
+    router.post("/orders", _AuthMiddleWare.isAuth, ordersController.create_orders)
+    router.delete("/orders/:id", _AuthMiddleWare.isAunthOrdersModify_userAdmin, ordersController.delete_orders)
+    router.patch("/orders/:id", _AuthMiddleWare.isAunthOrdersModify_userAdmin, ordersController.update_orders)
     router.post("/rating", ordersController.rating_product)
 
     router.get("/revenue_day", ordersController.revenue_day)
