@@ -1,7 +1,11 @@
 const Comments = require("../models/comments.model")
 
 exports.get_comments = (req, res) => {
-    Comments.getAll(req.query, response => res.status(200).send(response))
+    Comments.getAll(req.query, response => {
+        // console.log(response)
+        res.setHeader("X-Total-Count", +response.count);
+        res.status(200).send(response.comments)
+    })
 }
 
 exports.submit_comments = (req, res) => {

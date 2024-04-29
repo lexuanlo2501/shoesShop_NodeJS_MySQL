@@ -4,24 +4,34 @@ const sqlCustom = require('../common/sqlQuery')
 const Comments = () => {}
 
 Comments.getAll = async (_query, result) => {
-    const {_productId, _page=0, _limit=0} = _query
+    const {_productId, _page=0, _limit=0, _sellerID, _showLock=false} = _query
     try {
         // console.log(_productId)
         let sql = `
-            SELECT accounts.accName, seller_id, comments.id as comment_id, comments.detailOrder_id, fullName, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date
+            SELECT accounts.accName, seller_id, comments.id as comment_id, comments.detailOrder_id, fullName, value, detail_order.product_id, rating, DATE_FORMAT(date, '%d/%m/%Y %r') as date, comments.isLock
             FROM comments 
                 inner join detail_order on detail_order.id = comments.detailOrder_id
                 inner join orders on detail_order.order_id = orders.id
                 inner join products on products.id = detail_order.product_id
                 inner join accounts on accounts.accName = client_id
         `
-        _productId ?  sql += ` WHERE product_id = ${_productId}` : sql 
-        sql += " ORDER BY comments.id DESC"
+            // WHERE comments.isLock = 0
 
+        _productId ?  sql += ` WHERE product_id = ${_productId}` : sql 
+
+        if(!_showLock) {
+            sql += sql.includes("WHERE") ?  " AND comments.isLock = 0" :  " WHERE comments.isLock = 0"
+        }
+        if(_sellerID) {
+            sql += sql.includes("WHERE") ?  ` AND seller_id='${_sellerID}' ` :  ` WHERE seller_id='${_sellerID}'`
+        }
+
+        sql += " ORDER BY comments.id DESC"
         sql = _page && _limit ? sql + ` LIMIT ${_limit} OFFSET ${_limit*(_page-1)}` : sql
 
+      
 
-        const comment = await sqlCustom.executeSql(sql )
+        const comment = await sqlCustom.executeSql(sql)
 
         if(_productId) {
             let Comments_reply = await Promise.all(comment.map(async i => {
@@ -31,11 +41,27 @@ Comments.getAll = async (_query, result) => {
                     reply: (await sqlCustom.executeSql(`SELECT *, DATE_FORMAT(date, '%d/%m/%Y %r') as date FROM replycomment WHERE comment_id='${i.comment_id}' ORDER BY id DESC`))
                 }
             }))
-            result(Comments_reply)
+
+
+            let sqlGetXTotalCount = `
+                SELECT COUNT(*) AS totalCount
+                FROM comments 
+                    inner join detail_order on detail_order.id = comments.detailOrder_id
+                    inner join orders on detail_order.order_id = orders.id
+                    inner join products on products.id = detail_order.product_id
+                    inner join accounts on accounts.accName = client_id
+                WHERE product_id = ${_productId}
+            `
+            // GET X-Total-Count
+            const getCount = await sqlCustom.executeSql(sqlGetXTotalCount)
+
+            result({comments: Comments_reply, count: getCount[0].totalCount})
             return 
         }
 
-        result(comment)
+        // GET X-Total-Count
+        let sqlGetXTotalCount = await sqlCustom.executeSql(`SELECT COUNT(*) AS totalCount FROM comments`)
+        result({comments: comment, count: sqlGetXTotalCount[0].totalCount})
 
     } catch (error) {
         result(null)
@@ -112,16 +138,6 @@ Comments.submit = async (data, result) => {
 
 Comments.remove = async (id, result) => {
     try {
-        // const findCmt = (await sqlCustom.executeSql(`
-        //     SELECT comments.id FROM comments
-        //     INNER JOIN detail_order ON comments.detailOrder_id = detail_order.id
-        //     WHERE comments.detailOrder_id = ${detailOrder_id}  
-        // `))[0]
-        // if(!findCmt?.id) {
-        //     result(null)
-        //     return
-        // }
-
         const findDetailOrder = (await sqlCustom.executeSql(`
             SELECT comments.id, comments.detailOrder_id FROM comments
             INNER JOIN detail_order ON comments.detailOrder_id = detail_order.id
@@ -153,11 +169,9 @@ Comments.remove = async (id, result) => {
 
 Comments.update = async (id, dataBody, result) => {
     try {
-        const execUpd = await sqlCustom.executeSql(`
-            UPDATE comments
-            SET value = '${dataBody.value}'
-            WHERE id = ${id}
-        `)
+        // const excute = await sqlCustom.executeSql_value(`UPDATE accounts SET ? WHERE accName='${id}'`, data)
+
+        const execUpd = await sqlCustom.executeSql_value(`UPDATE comments SET ? WHERE id = ${id}`, dataBody)
         if(execUpd.changedRows) {
             result({message:"Cập nhật bình luận thành công", status: true})
         }

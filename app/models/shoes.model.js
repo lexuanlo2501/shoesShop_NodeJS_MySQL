@@ -12,7 +12,7 @@ const sqlCustom = require('../common/sqlQuery')
 
 Shoes.get_all = async (query_ = {}, result=() => {}) => {
     try {
-        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId, _ids} = query_
+        let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId, _ids, _hideLock=false} = query_
         // _ids is support for find list
         
         console.log("*--- Query ---*")
@@ -46,6 +46,9 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
                 // DÙNG ĐỂ HIỂN THỊ ĐƠN HÀNG CỦA KHÁCH HÀNG (KHÔNG PHÂN BIỆT B2C HAY C2C)
             }
             
+        }
+        if(_hideLock) {
+            sql += sql.includes("WHERE") ?  " AND isLock = 0" :  " WHERE isLock = 0"
         }
 
         if(_ids) {
@@ -133,7 +136,7 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
 Shoes.find = async (id, result=()=>{}) => {
 
    let sql = `
-        SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.dateCreate, A.isLock, B.type_name as type, C.per as discount_id
+        SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.seller_id ,A.dateCreate, A.isLock, B.type_name as type, C.per as discount_id
         FROM products A, types B, discount C
         WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = C.id
     `

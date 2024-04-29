@@ -242,19 +242,11 @@ Orders.create = async (data, result) => {
                 result({"message":messSoldOut, "status":false})
             }
     
-    
-    
-            
-    
-    
-    
         } catch (error) {
             console.log(error);
             throw error;
         }
     }
-    
-    
 }
 
 Orders.delete = async (id, result) => {
@@ -298,7 +290,7 @@ Orders.delete = async (id, result) => {
         // THÊM SỐ LƯỢNG (KHÔI PHỤC LẠI) SẢN PHẨM TỪ ĐƠN HỦY VÀO inventory(kho)
         await Promise.all(
             detail_order.map(async (element, index) => {
-                console.log({index:index, ob:element})
+                // console.log({index:index, ob:element})
                 return new Promise((resolve, reject) => {
                     db.query('UPDATE inventory SET quantity = quantity+?  WHERE product_id=? AND size=?', [element.quantity, element.product_id, element.size], (err) => {
                         if (err) {

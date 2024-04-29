@@ -34,13 +34,13 @@ exports.signIn_2 = (req, res) => {
             const _token = await JWT.make(rest) 
             const _refreshToken = await JWT.generateRefreshToken(rest)
             
-            // res.cookie("refreshToken", _refreshToken, {
-            //     httpOnly: true,
-            //     secure: false,
-            //     path: "/",
-            //     sameSite: "strict"
-            //     // sameSite: 'none'
-            // })
+            res.cookie("refreshToken", _refreshToken, {
+                httpOnly: true,
+                secure: false,
+                path: "/",
+                sameSite: "strict"
+                // sameSite: 'none'
+            })
             await sqlCustom.executeSql_value("INSERT INTO refreshtokens SET ?", {accName:response.accName, value: _refreshToken})
 
             res.status(200).json({accessToken: _token, status:true})
@@ -95,6 +95,7 @@ exports.rating_product = (req, res) => {
 
 exports.requestRefreshToken = async(req, res) => {
     const refreshToken = req.cookies.refreshToken
+    
     // console.log("-----in func requestRefreshToken")
     // console.log(req.cookies)
 
@@ -139,24 +140,29 @@ exports.requestRefreshToken = async(req, res) => {
 
 exports.requestRefreshToken_v2 = async(req, res) => {
     // const refreshToken = req.body.refreshToken
+    const refreshToken = req.cookies.refreshToken
+
     let refreshToken_user = await sqlCustom.executeSql(`SELECT * FROM refreshTokens WHERE accName = '${req.body.accName}'`)
     refreshToken_user = refreshToken_user[0]?.value
     if(refreshToken_user) {
         console.log("excute refreshTokens")
-
+        console.log(refreshToken)
+        if(refreshToken === refreshToken_user) {
+            console.log("auth true")
+        }
         let authorData = await JWT.checkFresh(refreshToken_user)
        
         const newAccessToken = await JWT.make(authorData?.data) 
         const newRefreshToken = await JWT.generateRefreshToken(authorData?.data)
-        
+
         await sqlCustom.executeSql_value("UPDATE refreshTokens SET value = ? WHERE accName = ?", [newRefreshToken, req.body.accName])
 
-        // res.cookie("refreshToken", newRefreshToken, {
-        //     httpOnly:true,
-        //     secure: false,
-        //     path: "/",
-        //     sameSite: "strict"
-        // })
+        res.cookie("refreshToken", newRefreshToken, {
+            httpOnly:true,
+            secure: false,
+            path: "/",
+            sameSite: "strict"
+        })
         res.status(200).json({
             accessToken: newAccessToken,
         })
