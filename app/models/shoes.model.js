@@ -176,7 +176,7 @@ Shoes.find = async (id, result=()=>{}) => {
 
 Shoes.findList = async (ids="d", result=()=>{},  _page=0, _limit=0,) => {
     // console.log(ids)
-    let products = await Shoes.get_all({_ids:ids, _page , _limit})
+    let products = await Shoes.get_all({_ids:ids,_C2C:"all", _page , _limit})
     // {shoes:products.shoes, count:products.count}
     result(products)
     return(products)
