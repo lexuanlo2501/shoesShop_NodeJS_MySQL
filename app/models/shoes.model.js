@@ -361,12 +361,12 @@ Shoes.update = (id, data, result) => {
     })
 }
 
-Shoes.im_exportProd = async (data, result) => {
+Shoes.im_exportProd = async (prodID, data, result) => {
     try {
-        await sqlCustom.executeSql(`UPDATE inventory SET quantity = quantity + ${data.quantity} WHERE product_id = '${data.product_id}' AND size = '${data.size}' `)
+        await sqlCustom.executeSql(`UPDATE inventory SET quantity = quantity + ${data.quantity} WHERE product_id = '${prodID}' AND size = '${data.size}' `)
         const mess = (quantity) => {
             let action = quantity>0 ? "nhập" : "xuất"
-            return `Bạn đã ${action} kho ${quantity} sản phẩm, size ${data.size} vào mã sản phẩm ${data.product_id}`
+            return `Bạn đã ${action} kho ${quantity} sản phẩm, size ${data.size} vào mã sản phẩm ${prodID}`
         }
         result(mess(data.quantity))
     } catch (error) {

@@ -105,7 +105,7 @@ exports.delete_imgs = (req, res) => {
 }
 
 exports.im_export_prod = (req, res) => {
-  Shoes.im_exportProd(req.body, response => {
+  Shoes.im_exportProd(req.params.id,req.body, response => {
     res.status(200).send(response)
   })
 }

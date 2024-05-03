@@ -127,16 +127,21 @@ Accounts.signIn = async (data, result) => {
                 if (err) {
                     reject(err);
                     result({"message":"Tên đăng nhập hoặc mật khẩu không chính xác","status":false})
-                } else if (acc.length === 1) {
+                }
+                else if(acc.length === 0) {
+                    resolve();
+                    result({"message":"Tên đăng nhập hoặc mật khẩu không chính xác","status":false})
+                }
+                else if(acc[0].isLock) {
+                    resolve();
+                    result({"message":"Tài khoản của bạn đã bị khóa, vui lòng liên hện với của hàng để tìm hiểu thêm","status":false})
+                }
+                else if (acc.length === 1) {
                     resolve();
                     const {password, ...restData} = acc[0]
                     result({...restData, status:true , favorite: acc[0].favorite ? acc[0].favorite.split(",").map(i => +i) : [] })
                 // result( id ? {...acc[0], favorite: acc[0].favorite.split(",").map(i => +i)} : acc)
-
-                } else if(acc.length === 0) {
-                    resolve();
-                    result({"message":"Tên đăng nhập hoặc mật khẩu không chính xác","status":false})
-                }
+                } 
                 
             })
         })
