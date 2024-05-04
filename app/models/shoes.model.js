@@ -6,7 +6,8 @@ const Shoes = (shoes) => {
 
 }
 
-const sqlCustom = require('../common/sqlQuery')
+const sqlCustom = require('../common/sqlQuery');
+const { count } = require("console");
 
 
 
@@ -15,8 +16,9 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId, _ids, _hideLock=false} = query_
         // _ids is support for find list
         
-        console.log("*--- Query ---*")
+        console.log("*---- Query ----*")
         console.log(query_)
+        console.log("*---------------*")
 
         let sql = `SELECT *,  DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`
         
@@ -51,11 +53,21 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
             sql += sql.includes("WHERE") ?  " AND isLock = 0" :  " WHERE isLock = 0"
         }
 
+        const Check_IDS = (_ids) => {
+            const arrIDS = _ids?.split(',') || []
+            return arrIDS.every(i => +i)
+        }
+
+        if(!Check_IDS(_ids)){
+            result({message:`Lỗi cú pháp tham số query`, status: false})
+            console.log("passss")
+            return {message:`Lỗi cú pháp tham số query`, status: false}
+        }
         if(_ids) {
             sql += sql.includes("WHERE") ? ` AND id IN (${_ids})` : ` WHERE id in (${_ids})`
         }
         
-
+     
         if(sql.includes("WHERE")) sql = _brand ? sql + ` AND brand_id = '${_brand}'` : sql
         else sql = _brand ? sql + ` WHERE brand_id = '${_brand}'` : sql
 
@@ -88,8 +100,10 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
             });
         });
 
-        const shoes_id = shoes.map(i => i.id).toString()
+        const shoes_id = shoes.map(i => i.id).toString() || 0
         // executeSql_all
+        const AmountProducts_sold = await sqlCustom.executeSql("select product_id,COUNT(*) as sold from detail_order WHERE product_id in (" + shoes_id + ") group BY product_id")
+        // console.log({AmountProducts_sold:AmountProducts_sold})
 
         const inventory = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id IN (${shoes_id || 0})`)
         const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id IN (${shoes_id || 0})`)
@@ -104,7 +118,8 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
                 size: i.size,
                 quantity: i.quantity
             })),
-            imgs: imgs.filter(img => img.product_id === product.id).map(i => i.name)
+            imgs: imgs.filter(img => img.product_id === product.id).map(i => i.name),
+            sold: AmountProducts_sold?.find( prod => prod.product_id === product.id)?.sold || 0
         }));
 
         
@@ -133,46 +148,68 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
 };
 
 
-Shoes.find = async (id, result=()=>{}) => {
+// Shoes.find = async (id, result=()=>{}) => {
 
-   let sql = `
-        SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.seller_id ,A.dateCreate, A.isLock, B.type_name as type, C.per as discount_id
-        FROM products A, types B, discount C
-        WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = C.id
-    `
+//    let sql = `
+//         SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.seller_id ,A.dateCreate, A.isLock, B.type_name as type, C.per as discount_id
+//         FROM products A, types B, discount C
+//         WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = C.id
+//     `
 
-    try {
-        // const product = await sqlCustom.executeSql_getByID("products", "id", id)
+//     try {
+//         // const product = await sqlCustom.executeSql_getByID("products", "id", id)
 
-        let product = (await sqlCustom.executeSql(sql))[0]
-        if (await product) {
-            const inven = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id = ${id}`)
-            // const imgs = await sqlCustom.executeSql_getByID("imgs", "product_id", id) || []
-            const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id = ${id}`) || []
+//         let product = (await sqlCustom.executeSql(sql))[0]
+//         if (await product) {
+//             const inven = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id = ${id}`)
+//             // const imgs = await sqlCustom.executeSql_getByID("imgs", "product_id", id) || []
+//             const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id = ${id}`) || []
             
-            const data = {
-                ...product,
+//             const data = {
+//                 ...product,
                 
-                inventory: [...inven].map(i => ({
-                    size: i.size,
-                    quantity: i.quantity
-                })),
-                imgs: [...imgs].map(img => img?.name)
-            };
-            result(data)
-            return data;
-        }
-        else {
-            result("Không tìm thấy mã sản phẩm " + id)
-            return 
-        }
+//                 inventory: [...inven].map(i => ({
+//                     size: i.size,
+//                     quantity: i.quantity
+//                 })),
+//                 imgs: [...imgs].map(img => img?.name)
+//             };
+//             result(data)
+//             return data;
+//         }
+//         else {
+//             result("Không tìm thấy mã sản phẩm " + id)
+//             return 
+//         }
 
         
-    } catch (error) {
-        result(null)
-        throw error;
+//     } catch (error) {
+//         result(null)
+//         throw error;
+//     }
+// };
+
+
+Shoes.find = async (id, result=()=>{}) => {
+    if(!+id) {
+        result({message:`Không tìm thấy sản phẩm có mã ${id}`, status: false})
+        return
+    }
+
+    let productFind = await Shoes.get_all({_ids:id})
+    console.log(productFind)
+    if(productFind.shoes.length) {
+        result(productFind.shoes[0])
+        return
+    }
+    else {
+        result({message:`Không tìm thấy sản phẩm có mã ${id}`, status: false})
+        return
     }
 };
+
+        
+
 
 Shoes.findList = async (ids="d", result=()=>{},  _page=0, _limit=0,) => {
     // console.log(ids)

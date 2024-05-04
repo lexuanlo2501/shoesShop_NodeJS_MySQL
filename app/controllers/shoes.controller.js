@@ -4,8 +4,13 @@ const fs = require('fs')
 
 exports.get_all_shoes = (req, res) => {
     Shoes.get_all(req.query, (response) => {
-        res.setHeader("X-Total-Count", +response.count);
-        res.send(response.shoes)
+      if(response.status === false) {
+        res.send(response)
+        return
+      }
+
+      res.setHeader("X-Total-Count", +response.count);
+      res.send(response.shoes)
     })
     
 }
@@ -21,6 +26,11 @@ exports.find_list_shoes = (req, res) => {
   const {_page, _limit} = req.query
   Shoes.findList(req.params.id, response => {
     // res.status(200).send(response)
+    if(response.status === false) {
+      res.send(response)
+      return
+    }
+
     res.setHeader("X-Total-Count", +response.count);
     res.send(response.shoes)
   },_page,_limit)

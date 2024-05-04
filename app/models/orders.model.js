@@ -12,18 +12,25 @@ const sqlCustom = require('../common/sqlQuery')
 
 Orders.get = async (result, id, _query) => {
 
-    const {_clientId, _status, _day, _month, _year, _sellerId} = _query
+    const {_clientId, _status, _day, _month, _year, _sellerId, _C2C} = _query
 
-    let sql = "SELECT *, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order FROM orders"
+    let sql = `SELECT orders.*, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order 
+        FROM orders
+        INNER JOIN detail_order ON detail_order.order_id = orders.id
+        INNER JOIN products ON detail_order.product_id = products.id
+        
+    `
+// WHERE products.seller_id IS NULL
+
+    sql += _sellerId ? ` WHERE products.seller_id='${_sellerId}'` :  " WHERE products.seller_id IS NULL"
 
     if(_sellerId) {
-        sql = `SELECT orders.*, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order 
-            FROM orders
-            INNER JOIN detail_order ON detail_order.order_id = orders.id
-            INNER JOIN products ON detail_order.product_id = products.id
-            WHERE products.seller_id='${_sellerId}'
-
-        `
+        // sql = `SELECT orders.*, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order 
+        //     FROM orders
+        //     INNER JOIN detail_order ON detail_order.order_id = orders.id
+        //     INNER JOIN products ON detail_order.product_id = products.id
+        //     WHERE products.seller_id='${_sellerId}'
+        // `
     }
     else {
         sql = id ? 
@@ -32,9 +39,6 @@ Orders.get = async (result, id, _query) => {
         sql
 
     }
-   
-
-    
 
     if(_clientId) {
         if(sql.includes("WHERE")) {
@@ -44,9 +48,6 @@ Orders.get = async (result, id, _query) => {
             sql = sql + ` WHERE client_id = '${_clientId}'`
         }
     }
-
-
-
 
     if(_day) {
         sql = sql.includes("WHERE") ? sql + ` AND DAY(date_order)=${_day}` : sql + ` WHERE DAY(date_order)=${_day}`

@@ -142,7 +142,7 @@ exports.requestRefreshToken_v2 = async(req, res) => {
     // const refreshToken = req.body.refreshToken
     const refreshToken = req.cookies.refreshToken
 
-    let refreshToken_user = await sqlCustom.executeSql(`SELECT * FROM refreshTokens WHERE accName = '${req.body.accName}'`)
+    let refreshToken_user = await sqlCustom.executeSql(`SELECT * FROM refreshtokens WHERE accName = '${req.body.accName}'`)
     refreshToken_user = refreshToken_user[0]?.value
     if(refreshToken_user) {
         console.log("excute refreshTokens")
@@ -155,7 +155,7 @@ exports.requestRefreshToken_v2 = async(req, res) => {
         const newAccessToken = await JWT.make(authorData?.data) 
         const newRefreshToken = await JWT.generateRefreshToken(authorData?.data)
 
-        await sqlCustom.executeSql_value("UPDATE refreshTokens SET value = ? WHERE accName = ?", [newRefreshToken, req.body.accName])
+        await sqlCustom.executeSql_value("UPDATE refreshtokens SET value = ? WHERE accName = ?", [newRefreshToken, req.body.accName])
 
         res.cookie("refreshToken", newRefreshToken, {
             httpOnly:true,
