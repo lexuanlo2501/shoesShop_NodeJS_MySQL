@@ -55,12 +55,11 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
 
         const Check_IDS = (_ids) => {
             const arrIDS = _ids?.split(',') || []
-            return arrIDS.every(i => +i)
+            return arrIDS.every(i => +i >= 0)
         }
 
         if(!Check_IDS(_ids)){
             result({message:`Lỗi cú pháp tham số query`, status: false})
-            console.log("passss")
             return {message:`Lỗi cú pháp tham số query`, status: false}
         }
         if(_ids) {

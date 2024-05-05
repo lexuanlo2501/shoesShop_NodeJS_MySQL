@@ -61,7 +61,7 @@ Orders.get = async (result, id, _query) => {
 
    
     if(_status) {
-        sql = sql.includes("WHERE") ? sql + ` AND status = '${_status}'` :  sql + ` WHERE status = '${_status}'`
+        sql = sql.includes("WHERE") ? sql + ` AND status = ${_status}` :  sql + ` WHERE status = ${_status}`
     }
 
     const ord = await new Promise((resolve, reject) => {
