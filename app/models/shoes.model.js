@@ -195,7 +195,7 @@ Shoes.find = async (id, result=()=>{}) => {
         return
     }
 
-    let productFind = await Shoes.get_all({_ids:id})
+    let productFind = await Shoes.get_all({_ids:id, _C2C:"all"})
     console.log(productFind)
     if(productFind.shoes.length) {
         result(productFind.shoes[0])

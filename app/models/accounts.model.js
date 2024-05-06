@@ -152,9 +152,14 @@ Accounts.signIn = async (data, result) => {
 
 Accounts.update = async (id,data, result) => {
     try {
-        if(!data.email && !data.accName && !data.phoneNumber) {
-            const excute = await sqlCustom.executeSql_value(`UPDATE accounts SET ? WHERE accName='${id}'`, data)
-            console.log(excute)
+        const dataUpdate = {...data}
+
+        if(data.password) {
+            dataUpdate.password = md5(data.password)
+        }
+
+        if(!data.accName) {
+            const excute = await sqlCustom.executeSql_value(`UPDATE accounts SET ? WHERE accName='${id}'`, dataUpdate)
             if(excute.affectedRows) {
                 result({status:true,message:'Cập nhật thành công'})
             }
@@ -163,7 +168,7 @@ Accounts.update = async (id,data, result) => {
             }
         }
         else {
-            result('Chưa có tính năng thay đổi thông như: Số điện thoại, tên tài khoản, email')
+            result('Chưa có tính năng thay đổi thông tên tài khoản')
         }
     } catch (error) {
         result(null)
