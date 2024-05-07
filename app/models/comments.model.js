@@ -70,7 +70,7 @@ Comments.getAll = async (_query, result) => {
 
 }
 
-Comments.checkPermit = async (data, result) => {
+Comments.checkPermit = async (data, result=()=>{}) => {
     try {
         const {product_id, accName} = data
         const sqlFind_orderDetail = `
@@ -81,12 +81,13 @@ Comments.checkPermit = async (data, result) => {
         `
         const dataFind = await sqlCustom.executeSql(sqlFind_orderDetail)
         if(dataFind.length) {
-            result({message:"Được phép cmt", status:true, detailOrder_ID: dataFind[0].detailOrder_id})
             //thêm trường detailOrder_ID vào response để bên FE lấy detailOrder_ID cho api đánh giá số sao
+            result({message:"Được phép cmt", status:true, detailOrder_ID: dataFind[0].detailOrder_id})
+            return({message:"Được phép cmt", status:true})
         }
         else {
             result({message:"Không được phép cmt", status:false})
-
+            return({message:"Không được phép cmt", status:false})
         }
     } catch (error) {
         result({message:"Error", status:false})
@@ -99,32 +100,22 @@ Comments.checkPermit = async (data, result) => {
 Comments.submit = async (data, result) => {
 
     try {
-        const {value, product_id, accName} = data
-        if (!value || !product_id || !accName) {
-            result({message:"Bạn gửi thiếu tham số, yêu cầu value, product_id, accName", status:false})
+        const {value, product_id, accName, detailOrderID} = data
+        if (!value || !product_id || !accName || !detailOrderID) {
+            result({message:"Bạn gửi thiếu tham số, yêu cầu value, product_id, accName, detailOrderID", status:false})
             return
         }
 
-        const sqlFind_orderDetail = `
-            SELECT detail_order.id as detailOrder_id, orders.client_id
-            FROM detail_order
-            INNER JOIN orders ON orders.id = detail_order.order_id
-            WHERE detail_order.product_id = ${product_id} AND orders.client_id = '${accName}' AND isComment = 0
-        `
-    
-        const dataFind = await sqlCustom.executeSql(sqlFind_orderDetail)
+        const allowCmt = await Comments.checkPermit({product_id, accName})
 
-        console.log(data)
-        console.log(dataFind)
-
-        if(dataFind.length === 0) {
+        if(allowCmt.status === false) {
             result({message:"Bạn không được phép đánh giá vì chưa mua sản phẩm hoặc bạn đã đánh giá rồi", status:false})
             return 
         }
         else {
-            const detail_order_find = (dataFind[0]).detailOrder_id
-            await sqlCustom.executeSql(`UPDATE detail_order SET isComment = 1 WHERE id =${detail_order_find}`)
-            await sqlCustom.executeSql_value("INSERT INTO comments SET ?", {value: value, detailOrder_id: detail_order_find})
+            await sqlCustom.executeSql(`UPDATE detail_order SET isComment = 1 WHERE id =${detailOrderID}`)
+            await sqlCustom.executeSql_value("INSERT INTO comments SET ?", {value: value, detailOrder_id: detailOrderID})
+           
             result({message:"Gửi bình luận thành công", status:true})
         }
 

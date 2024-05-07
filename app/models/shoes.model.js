@@ -147,48 +147,6 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
 };
 
 
-// Shoes.find = async (id, result=()=>{}) => {
-
-//    let sql = `
-//         SELECT A.id, A.name, A.img,A.brand_id, A.BC_color, A.description, A.price, A.seller_id ,A.dateCreate, A.isLock, B.type_name as type, C.per as discount_id
-//         FROM products A, types B, discount C
-//         WHERE A.id = ${id} AND A.type = B.id AND A.discount_id = C.id
-//     `
-
-//     try {
-//         // const product = await sqlCustom.executeSql_getByID("products", "id", id)
-
-//         let product = (await sqlCustom.executeSql(sql))[0]
-//         if (await product) {
-//             const inven = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id = ${id}`)
-//             // const imgs = await sqlCustom.executeSql_getByID("imgs", "product_id", id) || []
-//             const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id = ${id}`) || []
-            
-//             const data = {
-//                 ...product,
-                
-//                 inventory: [...inven].map(i => ({
-//                     size: i.size,
-//                     quantity: i.quantity
-//                 })),
-//                 imgs: [...imgs].map(img => img?.name)
-//             };
-//             result(data)
-//             return data;
-//         }
-//         else {
-//             result("Không tìm thấy mã sản phẩm " + id)
-//             return 
-//         }
-
-        
-//     } catch (error) {
-//         result(null)
-//         throw error;
-//     }
-// };
-
-
 Shoes.find = async (id, result=()=>{}) => {
     if(!+id) {
         result({message:`Không tìm thấy sản phẩm có mã ${id}`, status: false})

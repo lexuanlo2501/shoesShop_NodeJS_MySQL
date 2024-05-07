@@ -13,12 +13,13 @@ const sqlCustom = require('../common/sqlQuery')
 Orders.get = async (result, id, _query) => {
 
     const {_clientId, _status, _day, _month, _year, _sellerId, _C2C} = _query
+    console.log("_Query orders")
+    console.log(_query)
 
-    let sql = `SELECT orders.*, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order 
+    let sql = `SELECT DISTINCT orders.*, DATE_FORMAT(date_order, '%d/%m/%Y %r') AS date_order 
         FROM orders
         INNER JOIN detail_order ON detail_order.order_id = orders.id
         INNER JOIN products ON detail_order.product_id = products.id
-        
     `
 // WHERE products.seller_id IS NULL
 
@@ -73,6 +74,8 @@ Orders.get = async (result, id, _query) => {
             resolve(ord);
         })
     })
+
+    console.log(ord)
 
     let sqlDetailOrder = " SELECT detail_order.* FROM detail_order"
 
