@@ -99,6 +99,24 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
             });
         });
 
+        // Handle get accName and fullName seller
+        // Nếu sản phẩm của người bán thì trường seller_id != NULL và có thêm trường sellerName
+        let getAllAccName;
+        let getAllAccNameToString;
+        let getAllFullName;
+
+        if(_C2C === 'true' || _C2C === 'all') {
+            function filterDuplicates(arr) {
+                return arr.filter((value, index) => arr.indexOf(value) === index);
+            }
+            getAllAccName = shoes.map(i => i.seller_id).filter(j => j)
+            getAllAccName = filterDuplicates(getAllAccName)
+            getAllAccNameToString = getAllAccName.reduce((result, item) => result+`'${item}',`,"")
+            getAllAccNameToString = getAllAccNameToString.slice(0, -1) || 0
+            getAllFullName = await sqlCustom.executeSql("SELECT fullName, accName FROM accounts WHERE accName IN(" + getAllAccNameToString + ")")
+        }
+        //  ------------
+
         const shoes_id = shoes.map(i => i.id).toString() || 0
         // executeSql_all
         const AmountProducts_sold = await sqlCustom.executeSql("select product_id,COUNT(*) as sold from detail_order WHERE product_id in (" + shoes_id + ") group BY product_id")
@@ -118,7 +136,8 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
                 quantity: i.quantity
             })),
             imgs: imgs.filter(img => img.product_id === product.id).map(i => i.name),
-            sold: AmountProducts_sold?.find( prod => prod.product_id === product.id)?.sold || 0
+            sold: AmountProducts_sold?.find( prod => prod.product_id === product.id)?.sold || 0,
+            sellerName: getAllFullName?.find(i => i.accName === product.seller_id)?.fullName
         }));
 
         
