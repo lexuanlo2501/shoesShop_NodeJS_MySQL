@@ -4,10 +4,10 @@ const _AuthMiddleWare = require('../common/_AuthMiddleWare')
 module.exports = (router) => {
     const accountsController = require("../controllers/accounts.controller")
 
-    // router.get("/accounts", _AuthMiddleWare.isAuth,accountsController.get_account)
-    // router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUser,accountsController.get_account)
-    router.get("/accounts", accountsController.get_account)
-    router.get("/accounts/:id", accountsController.get_account)
+    router.get("/accounts", _AuthMiddleWare.isAuth,accountsController.get_account)
+    router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUser,accountsController.get_account)
+    // router.get("/accounts", accountsController.get_account)
+    // router.get("/accounts/:id", accountsController.get_account)
     
     router.post("/signin",accountsController.signIn)
     router.post("/signup", accountsController.create_account)

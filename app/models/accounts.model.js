@@ -1,4 +1,5 @@
 const db = require("../common/connect")
+const uuid = require('uuid')
 const md5 = require("md5")
 const sqlCustom = require('../common/sqlQuery')
 
@@ -10,9 +11,6 @@ const Accounts = (acc) => {
 
 
 Accounts.get = async (result, id) => {
-    
-    // Kết nối đến cơ sở dữ liệu và nhận đối tượng db
-   
     try {
         let sql = 
         id ? 
@@ -23,10 +21,7 @@ Accounts.get = async (result, id) => {
         const acc = await sqlCustom.executeSql(sql)
         let infor_acc = id ? acc[0] : acc
         if(id) {
-
             infor_acc.favorite = infor_acc.favorite ? acc[0]?.favorite.split(",").map(i => +i) : []
-            const favorite_list_detail = []
-
 
             const favorite_list = await sqlCustom.executeSql(`
                 SELECT A.id, A.brand_id, A.name, A.price, A.BC_color, A.img ,B.per 
@@ -40,8 +35,8 @@ Accounts.get = async (result, id) => {
             infor_acc.favorite = favorite_list
             infor_acc.addresses = address_list.map(i => i.addressName)
         }
+        
         result(infor_acc)
-
     } catch (error) {
         result(null)
         throw error
@@ -60,7 +55,7 @@ Accounts.create = async (result, data) => {
             return
         }
         let dataRegister = {accName:"",fullName:"",email:"",password:"",phoneNumber:"",dateOfBirth:"",gender:""}
-        dataRegister = {...restData, password:md5(restData.password)}
+        dataRegister = {accID:uuid.v4(), ...restData, password:md5(restData.password)}
 
 
         // PHƯƠNG ÁN TẠM THỜI CHO 3 HÀM CHECK DƯỚI, KHÔNG TỐI ƯU CODE

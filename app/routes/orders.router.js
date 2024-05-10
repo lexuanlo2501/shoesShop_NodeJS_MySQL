@@ -23,16 +23,13 @@ function sortObject(obj) {
 module.exports = (router) => {
 
     const ordersController = require("../controllers/orders.controller")
-    // router.get("/orders", ordersController.get_orders)
     router.get("/orders", _AuthMiddleWare.isAunthOrders_userAdmin, ordersController.get_orders)
     router.get("/orders/:id", _AuthMiddleWare.isAunthOrders_userAdmin, ordersController.get_orders)
     router.post("/orders", _AuthMiddleWare.isAuth, ordersController.create_orders)
     router.delete("/orders/:id", _AuthMiddleWare.isAunthOrdersModify_userAdmin, ordersController.delete_orders)
     router.patch("/orders/:id", _AuthMiddleWare.isAunthOrdersModify_userAdmin, ordersController.update_orders)
     router.post("/rating", ordersController.rating_product)
-
     router.get("/revenue_day", ordersController.revenue_day)
-
 
 
     // router.post('/create_payment_url', function (req, res, next) {
@@ -237,18 +234,7 @@ module.exports = (router) => {
         }
     });
 
-
 }
-
-
-// https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=1806000&vnp_Command=pay&vnp_CreateDate=20210801153333&vnp_CurrCode=VND&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=Thanh+toan+don+hang+%3A5&vnp_OrderType=other&vnp_ReturnUrl=https%3A%2F%2Fdomainmerchant.vn%2FReturnUrl&vnp_TmnCode=WF87XKNJ&vnp_TxnRef=5&vnp_Version=2.1.0&vnp_SecureHash=3e0d61a0c0534b2e36680b3f7277743e8784cc4e1d68fa7d276e79c23be7d6318d338b477910a27992f5057bb1582bd44bd82ae8009ffaf6d141219218625c42
-// https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=1806000&vnp_Command=pay&vnp_CreateDate=20210801153333&vnp_CurrCode=VND&vnp_IpAddr=127.0.0.1&vnp_Locale=vn&vnp_OrderInfo=Thanh+toan+don+hang+%3A5&vnp_OrderType=other&vnp_ReturnUrl=https%3A%2F%2Fdomainmerchant.vn%2FReturnUrl&vnp_TmnCode=DEMOV210&vnp_TxnRef=5&vnp_Version=2.1.0&vnp_SecureHash=3e0d61a0c0534b2e36680b3f7277743e8784cc4e1d68fa7d276e79c23be7d6318d338b477910a27992f5057bb1582bd44bd82ae8009ffaf6d141219218625c42
-
-// https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=2806000&vnp_Command=pay&vnp_CreateDate=20231014155233&vnp_CurrCode=VND&vnp_IpAddr=192.168.1.52&vnp_OrderInfo=THANH TOAN&vnp_OrderType=other&vnp_ReturnUrl=http://localhost:3000/order&vnp_TmnCode=WF87XKNJ&vnp_TxnRef=20231014&vnp_Version=2.1.0&vnp_SecureHash=a912da3c04fb099b6732f5cdbcff739c62907b0a9e5ced16957f14d0277b8f47e898c2e28ab9bb1c01698f210d3a9c33e742db8b472bebdbf38197cbd9c36346
-
-
-
-
 
 // https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?vnp_Amount=1000000&vnp_Command=pay&vnp_CreateDate=20231014211108&vnp_CurrCode=VND&vnp_IpAddr=%3A%3A1&vnp_Locale=vn&vnp_OrderInfo=Thanh+toan+cho+ma+GD%3A14211108&vnp_OrderType=other&vnp_ReturnUrl=http%3A%2F%2Flocalhost%3A3000%2Forder&vnp_TmnCode=WF87XKNJ&vnp_TxnRef=14211108&vnp_Version=2.1.0&vnp_SecureHash=42066d61c18d59d7e56c926fc90131f844c34bd70629a9f41e9609012b47ddd168e762a9aba0446ae46ddb7a93dbab56b2e2fef9777c772875e83104c327ac69
 

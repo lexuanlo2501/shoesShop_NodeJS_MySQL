@@ -1,5 +1,6 @@
 const { query } = require("express")
 const db = require("../common/connect")
+const uuid = require('uuid')
 
 
 const Orders = (shoes) => {
@@ -74,8 +75,6 @@ Orders.get = async (result, id, _query) => {
             resolve(ord);
         })
     })
-
-    console.log(ord)
 
     let sqlDetailOrder = " SELECT detail_order.* FROM detail_order"
 
@@ -208,14 +207,13 @@ Orders.create = async (data, result) => {
                 await sqlCustom.executeSql(`INSERT INTO notify(id_notify_type, content, to_admin_all) VALUES (7,"${content}","admin")`)
     
                 // THÊM VÀO BẢNG detail_order 
-                await new Promise((resolve, reject) => {
-                    let findDiscount_prod = (id) => producst_sql.find(prod => prod.id === id).per
+                let findDiscount_prod = (id) => producst_sql.find(prod => prod.id === id).per
+                let values = restData.id ?
+                products.map(i => [restData.id, i.product_id, i.size, i.quantity, findDiscount_prod(i.product_id)])
+                :
+                products.map(i => [order.insertId, i.product_id, i.size, i.quantity, findDiscount_prod(i.product_id)])
 
-                    let values = restData.id ?
-                    products.map(i => [restData.id, i.product_id, i.size, i.quantity, findDiscount_prod(i.product_id)])
-                    :
-                    products.map(i => [order.insertId, i.product_id, i.size, i.quantity, findDiscount_prod(i.product_id)])
-    
+                await new Promise((resolve, reject) => {
                     db.query("INSERT INTO detail_order (order_id, product_id, size, quantity, discount) VALUES ?", [values], (err) => {
                         if (err) {
                             reject(err);
@@ -225,7 +223,12 @@ Orders.create = async (data, result) => {
                     })
     
                 })
-    
+
+                // THÊM VÀO BẢNG RATING
+                const findAccID = (await sqlCustom.executeSql("SELECT accID FROM accounts WHERE accName='"+restData.client_id+"'"))[0].accID
+                let valuesInsertRating = values.map(i => [uuid.v4(), i[1], findAccID, 0]) // i[1] is product_id
+                await sqlCustom.executeSql_value("INSERT INTO rating (ratingID, productID, accID, rating) VALUES ?", [valuesInsertRating])
+
                 // TRỪ SỐ LƯỢNG SẢN PHẨM TRONG BẢNG inventory KHI ĐẶT HÀNG THÀNH CÔNG
                 await new Promise((resolve, reject) => {
                     products.forEach(element => {
@@ -279,7 +282,7 @@ Orders.delete = async (id, result) => {
                 }
             })
         })
-
+        
         // XÓA ĐƠN HÀNG
         await new Promise((resolve, reject) => {
             db.query("DELETE FROM orders WHERE id = ?", id, err => {
