@@ -3,6 +3,7 @@ module.exports = (router) => {
 
     router.get("/brands", brandsController.get_all_brand)
     router.post("/brands", brandsController.create_brand)
+    router.patch("/brands/:id", brandsController.update_brand)
     router.delete("/brands/:id", brandsController.delete_brand)
 
 }

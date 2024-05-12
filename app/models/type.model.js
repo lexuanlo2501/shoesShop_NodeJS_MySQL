@@ -28,8 +28,14 @@ Type.create = async (data, result) => {
 
 Type.delete = async (id, result) => {
     try {
-        await sqlCustom.executeSql(`DELETE FROM types WHERE id = ${id}`)
-        result("Xóa loại sản phẩm thành công")
+        const checkProd = await sqlCustom.executeSql("SELECT * FROM products WHERE type =" + id +" LIMIT 1")
+        if(checkProd.length === 0) {
+            await sqlCustom.executeSql(`DELETE FROM types WHERE id = ${id}`)
+            result({message: "Xóa loại sản phẩm thành công.", status: true})
+        }
+        else {
+            result({message: "Không được phép xóa loại mà tồn tại sản phẩm có loại này.", status: false})
+        }
     } catch (error) {
         result(null)
         throw error

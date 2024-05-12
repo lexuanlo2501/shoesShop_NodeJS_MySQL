@@ -173,8 +173,12 @@ Shoes.find = async (id, result=()=>{}) => {
     }
 
     let productFind = await Shoes.get_all({_ids:id, _C2C:"all"})
-    console.log(productFind)
     if(productFind.shoes.length) {
+        if(productFind.shoes[0].seller_id) {
+            const quantityProd = (await sqlCustom.executeSql_value("SELECT COUNT(*) as quantity FROM `products` WHERE seller_id=?", productFind.shoes[0].seller_id))[0]
+            result({...productFind.shoes[0], amountProdStore: quantityProd.quantity})
+            return
+        }
         result(productFind.shoes[0])
         return
     }

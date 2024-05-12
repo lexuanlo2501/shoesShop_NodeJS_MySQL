@@ -1,4 +1,4 @@
-const { executeSql } = require('./sqlQuery')
+const { executeSql, executeSql_value } = require('./sqlQuery')
 
 let isAuth = async (req, res, next) => {
     let _JWT = require('../common/_JWT')
@@ -22,8 +22,7 @@ let isAuth = async (req, res, next) => {
 
 let isAunth_AdminUser =  (req, res, next) => {
     isAuth(req, res, () => {
-        // console.log("-----in fn isAunth_AdminUser")
-        // console.log(req.auth.data)
+      
         if(req.auth.data.accName == req.params.id || req.auth.data.role === "admin" ) {
             next()
         }
@@ -32,6 +31,34 @@ let isAunth_AdminUser =  (req, res, next) => {
         }
     })
 }
+
+let isAunth_AdminUserSeller =  (req, res, next) => {
+    // req.params.id: accName slient
+    // client mua sản phẩm của seller thì được phép PASS
+    isAuth(req, res, async () => {
+        const {accName:accNameSeller} = req.auth.data
+        let checkOrder = {}
+        if(req.auth.data.role === "seller") {
+            checkOrder =(await executeSql_value(`
+                SELECT products.seller_id
+                FROM orders
+                INNER JOIN detail_order ON orders.id = detail_order.order_id
+                INNER JOIN products ON products.id = detail_order.product_id
+                WHERE orders.client_id = ? AND products.seller_id = ?
+                LIMIT 1
+            `, [req.params.id, accNameSeller]))[0]
+        }
+
+
+        if(req.auth.data.accName == req.params.id ||  req.auth.data.role === "admin" || req.auth.data.accName == checkOrder?.seller_id  ) {
+            next()
+        }
+        else {
+            res.status(403).json("Bạn không có quyền thực hiện chức năng này")
+        }
+    })
+}
+
 
 let isAdmin =  (req, res, next) => {
     isAuth(req, res, () => {
@@ -122,4 +149,5 @@ module.exports = {
     isAdminSeller: isAdminSeller,
     isAunthOrders_userAdmin: isAunthOrders_userAdmin,
     isAunthOrdersModify_userAdmin:isAunthOrdersModify_userAdmin,
+    isAunth_AdminUserSeller: isAunth_AdminUserSeller
 }

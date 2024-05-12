@@ -42,8 +42,14 @@ Category.create = async (data, result) => {
 
 Category.delete = async (id, result) => {
     try {
-        await sqlCustom.executeSql(`DELETE FROM category WHERE id = ${id}`)
-        result("Xóa mục lục sản phẩm thành công")
+        const checkType = await sqlCustom.executeSql("SELECT * FROM types WHERE category_id =" + id +" LIMIT 1")
+        if(checkType.length === 0) {
+            await sqlCustom.executeSql(`DELETE FROM category WHERE id = ${id}`)
+            result({message: "Xóa mục lục sản phẩm thành công.", status: true})
+        }
+        else {
+            result({message: "Không được phép xóa danh mục mà tồn tại loại sản phẩm thuộc danh mục này sản phẩm này.", status: false})
+        }
     } catch (error) {
         result(null)
         throw error
@@ -58,11 +64,8 @@ Category.update = async (id,dataBody, result) => {
             SET ?
             WHERE id = ${id};
         `, dataBody)
-        // await sqlCustom.executeSql_value(`UPDATE accounts SET ? WHERE accName='${id}'`, data)
 
         result("Cập nhật danh mục thành công")
-       
-       
     } catch (error) {
         result(null)
         throw error

@@ -116,30 +116,19 @@ Accounts.create = async (result, data) => {
 Accounts.signIn = async (data, result) => {
     try {
         const {accName, password} = data
-        
-        await new Promise((resolve, reject) => {
-            db.query("SELECT *, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create FROM accounts WHERE accName = ? AND password = ?", [accName, md5(password)], (err, acc) => {
-                if (err) {
-                    reject(err);
-                    result({"message":"Tên đăng nhập hoặc mật khẩu không chính xác","status":false})
-                }
-                else if(acc.length === 0) {
-                    resolve();
-                    result({"message":"Tên đăng nhập hoặc mật khẩu không chính xác","status":false})
-                }
-                else if(acc[0].isLock) {
-                    resolve();
-                    result({"message":"Tài khoản của bạn đã bị khóa, vui lòng liên hện với của hàng để tìm hiểu thêm","status":false})
-                }
-                else if (acc.length === 1) {
-                    resolve();
-                    const {password, ...restData} = acc[0]
-                    result({...restData, status:true , favorite: acc[0].favorite ? acc[0].favorite.split(",").map(i => +i) : [] })
-                // result( id ? {...acc[0], favorite: acc[0].favorite.split(",").map(i => +i)} : acc)
-                } 
-                
-            })
-        })
+        const loginSuccess = await sqlCustom.executeSql_value("SELECT *, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create FROM accounts WHERE accName = ? AND password = ?",[accName, md5(password)])
+
+        if(loginSuccess.length === 0) {
+            result({"message":"Tên đăng nhập hoặc mật khẩu không chính xác","status":false})
+        }
+        else if(loginSuccess[0].isLock) {
+            result({"message":"Tài khoản của bạn đã bị khóa, vui lòng liên hện với của hàng để tìm hiểu thêm","status":false})
+        }
+        else if (loginSuccess.length === 1) {
+            const {password, ...restData} = loginSuccess[0]
+            result({...restData, status:true , favorite: loginSuccess[0].favorite ? loginSuccess[0].favorite.split(",").map(i => +i) : [] })
+        } 
+                    
     } catch (error) {
         throw error
     }

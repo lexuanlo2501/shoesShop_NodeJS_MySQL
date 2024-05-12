@@ -5,7 +5,9 @@ module.exports = (router) => {
     const accountsController = require("../controllers/accounts.controller")
 
     router.get("/accounts", _AuthMiddleWare.isAuth,accountsController.get_account)
-    router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUser,accountsController.get_account)
+    // router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUser,accountsController.get_account)
+    router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUserSeller,accountsController.get_account)
+
     // router.get("/accounts", accountsController.get_account)
     // router.get("/accounts/:id", accountsController.get_account)
     
