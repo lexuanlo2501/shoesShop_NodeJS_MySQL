@@ -9,6 +9,12 @@ exports.get_account = (req, res) => {
     }, req.params.id)
 }
 
+exports.get_account_lite = (req, res) => {
+    Accounts.get_lite(response => {
+        res.send(response)
+    }, req.params.id)
+}
+
 exports.create_account = (req, res) => {
     Accounts.create(response => {
         res.send(response)

@@ -1,14 +1,9 @@
 const db = require("../common/connect")
 const fs = require('fs')
 
-const Shoes = (shoes) => {
-
-
-}
+const Shoes = (shoes) => {}
 
 const sqlCustom = require('../common/sqlQuery');
-const { count } = require("console");
-
 
 
 Shoes.get_all = async (query_ = {}, result=() => {}) => {
@@ -16,19 +11,48 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         let {_page , _limit , _type, _min, _max, _brand, _string, _isDiscount, _random, _category, _C2C="false", _sellerId, _ids, _hideLock=false} = query_
         // _ids is support for find list
         
-        console.log("*---- Query ----*")
+        console.log("*---- Query product ----*")
         console.log(query_)
-        console.log("*---------------*")
+        console.log("*-----------------------*")
 
         let sql = `SELECT *,  DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate FROM products`
-        
+        // types.category_id
         let sqlHaveCategory = `
-            SELECT products.*, types.category_id, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate 
+            SELECT products.*, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate 
             FROM products
                 INNER JOIN types ON products.type = types.id
-            WHERE types.category_id = '${_category}'
+            WHERE types.category_id = ${_category}
         `
-        sql = _category ?  sqlHaveCategory : sql
+
+        let sqlHaveMinMax = `
+            SELECT products.*, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate
+            FROM products			
+                INNER JOIN discount ON discount.id = products.discount_id			
+            WHERE (price-price*discount.per/100 BETWEEN ${_min} AND ${_max})
+        `
+
+        let sqlHaveCategoryMinMax = `
+            SELECT products.*, types.category_id, DATE_FORMAT(dateCreate, '%d/%m/%Y %r') AS dateCreate	
+            FROM products			
+                INNER JOIN discount ON discount.id = products.discount_id		
+                INNER JOIN types ON products.type = types.id
+            WHERE (price-price*discount.per/100 BETWEEN ${_min} AND ${_max}) AND types.category_id = ${_category}	
+        `
+
+        if(_category && _min && _max) {
+            sql = sqlHaveCategoryMinMax
+        }
+        else if(_category) {
+            sql = sqlHaveCategory
+        }
+        else if(_min && _max) {
+            sql = sqlHaveMinMax
+        }
+
+        // sql = _category ?  sqlHaveCategory : sql
+
+        // if(sql.includes("WHERE")) sql = _max ? sql + ` AND price BETWEEN ${_min} AND ${_max}` : sql
+        // else sql =  _max ? sql + ` WHERE price BETWEEN ${_min} AND ${_max}` : sql
 
         // HANDLE QUERY PARAMETERS
         if(_sellerId) {
@@ -73,8 +97,7 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         if(sql.includes("WHERE")) sql = _type ? sql + ` AND type = ${+_type}` : sql
         else sql = _type ? sql + ` WHERE type = ${+_type}` : sql
         
-        if(sql.includes("WHERE")) sql = _max ? sql + ` AND price BETWEEN ${_min} AND ${_max}` : sql
-        else sql =  _max ? sql + ` WHERE price BETWEEN ${_min} AND ${_max}` : sql
+      
 
         if(sql.includes("WHERE")) sql = _string ? sql + ` AND name LIKE '%${_string}%'` : sql
         else sql = _string ? sql + ` WHERE name LIKE '%${_string}%'` : sql
@@ -105,7 +128,7 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         let getAllAccNameToString;
         let getAllFullName;
 
-        if(_C2C === 'true' || _C2C === 'all') {
+        if(_C2C === 'true' || _C2C === 'all' || _sellerId) {
             function filterDuplicates(arr) {
                 return arr.filter((value, index) => arr.indexOf(value) === index);
             }
@@ -142,7 +165,7 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
 
         
         // GET X-Total-Count
-        let sqlGetXTotalCount = _category ?
+        let sqlGetXTotalCount = _category || _min || _max ?
         sql.split("LIMIT")[0].replace("products.*", "COUNT(*) AS totalCount")
         :
         sql.split("LIMIT")[0].replace("*", "COUNT(*) AS totalCount")

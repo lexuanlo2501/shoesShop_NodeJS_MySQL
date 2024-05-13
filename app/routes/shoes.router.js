@@ -21,8 +21,6 @@ const upload = multer({
     storage: storage
 })
 
-
-
 module.exports = (router) => {
     const shoesController = require("../controllers/shoes.controller")
     router.get("/shoes", shoesController.get_all_shoes)

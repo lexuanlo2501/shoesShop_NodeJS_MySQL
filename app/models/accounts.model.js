@@ -41,10 +41,31 @@ Accounts.get = async (result, id) => {
         result(null)
         throw error
     }
+}
 
+
+Accounts.get_lite = async (result, id) => {
+    try {
+        let sql = 
+        id ? 
+        `SELECT fullName, role, phoneNumber, DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth, gender, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create FROM accounts WHERE accName='${id}'`
+        :
+        "SELECT fullName, role, phoneNumber, DATE_FORMAT(dateOfBirth, '%Y-%m-%d') as dateOfBirth, gender, DATE_FORMAT(date_create, '%d/%m/%Y %r') AS date_create FROM accounts"
     
-    
-    
+        const acc = await sqlCustom.executeSql(sql)
+        let infor_acc = id ? acc[0] : acc
+
+        if(id && infor_acc?.role === 'client') {
+            const {role, phoneNumber, ...restData} = infor_acc
+            result(restData)
+            return
+        }
+     
+        result(infor_acc)
+    } catch (error) {
+        result(null)
+        throw error
+    }
 }
 
 Accounts.create = async (result, data) => {

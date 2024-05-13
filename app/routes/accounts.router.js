@@ -7,6 +7,8 @@ module.exports = (router) => {
     router.get("/accounts", _AuthMiddleWare.isAuth,accountsController.get_account)
     // router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUser,accountsController.get_account)
     router.get("/accounts/:id", _AuthMiddleWare.isAunth_AdminUserSeller,accountsController.get_account)
+    router.get("/accountsLite", accountsController.get_account_lite)
+    router.get("/accountsLite/:id", accountsController.get_account_lite)
 
     // router.get("/accounts", accountsController.get_account)
     // router.get("/accounts/:id", accountsController.get_account)
