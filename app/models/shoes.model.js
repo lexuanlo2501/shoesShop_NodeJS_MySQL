@@ -142,8 +142,8 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
 
         const shoes_id = shoes.map(i => i.id).toString() || 0
         // executeSql_all
-        const AmountProducts_sold = await sqlCustom.executeSql("select product_id,COUNT(*) as sold from detail_order WHERE product_id in (" + shoes_id + ") group BY product_id")
-        // console.log({AmountProducts_sold:AmountProducts_sold})
+        const AmountProducts_sold = await sqlCustom.executeSql("select product_id, SUM(quantity) as sold from detail_order WHERE product_id in (" + shoes_id + ") group BY product_id")
+        console.log({AmountProducts_sold:AmountProducts_sold})
 
         const inventory = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id IN (${shoes_id || 0})`)
         const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id IN (${shoes_id || 0})`)

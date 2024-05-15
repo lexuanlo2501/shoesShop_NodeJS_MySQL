@@ -4,20 +4,54 @@ const Dashboard = (Dashboard) => {
 
 }
 
-Dashboard.get = async (_year,result) => {
+Dashboard.get = async (_query,result) => {
     try {
+        const {_year, _sellerID} = _query
+
+        const categories = await executeSql("SELECT id, name FROM category")
+
+        if(!_year) {
+            result({"message":"Vui lòng nhập tham số _year", "status":false})
+            return
+        }
+
+        const sqlGetHotProduct = (categoryID) => {
+            return `
+                SELECT product_id, SUM(quantity) as total FROM detail_order
+                INNER JOIN orders ON orders.id = detail_order.order_id
+                INNER JOIN products ON products.id = detail_order.product_id
+                INNER JOIN types ON products.type = types.id
+                WHERE YEAR(date_order)=${_year} AND products.seller_id IS NULL AND types.category_id = ${categoryID}
+                GROUP BY product_id
+                ORDER BY SUM(quantity) DESC
+                LIMIT 3
+            `
+        }
+
+        let hotProductCategory = await Promise.all(categories.map(async i => {
+            return {
+                categoryID: i.id,
+                categoryName: i.name,
+                products: (await executeSql(sqlGetHotProduct(i.id)))
+            }
+        }))
 
         const hot_product = await executeSql(`
-            SELECT product_id, SUM(quantity) as total FROM detail_order A ${_year ? `,orders B`:""}
-            ${ _year ? `WHERE A.order_id = B.id AND YEAR(date_order)=${_year}`:""}
+            SELECT product_id, SUM(quantity) as total FROM detail_order
+            INNER JOIN orders ON orders.id = detail_order.order_id
+            INNER JOIN products ON products.id = detail_order.product_id
+            WHERE YEAR(date_order)=${_year} AND products.seller_id IS NULL
             GROUP BY product_id
             ORDER BY SUM(quantity) DESC
-            LIMIT 3`
-        )
-        console.log(hot_product)
+            LIMIT 3
+        `)
+
+        // INNER JOIN products ON products.id = detail_order.product_id
+        // WHERE products.seller_id IS NULL
+        // console.log(hot_product)
         const shoesModel = require("../models/shoes.model")
         const dataFind_shoes = (await shoesModel.findList(hot_product.map(i => i.product_id).toString()||"0")).shoes
-        console.log(dataFind_shoes)
+        // console.log(dataFind_shoes)
 
         const accounts = await executeSql(`SELECT COUNT(*) as number FROM accounts`)
 
@@ -60,7 +94,8 @@ Dashboard.get = async (_year,result) => {
             "order_brand_pay": order_brand_pay,
             "quantity_product": quantity_product,
             "revenue_month": revenue_month,
-            "number_of_orders":numberOfOrders[0].total
+            "number_of_orders":numberOfOrders[0].total,
+            "hotProductCategory":hotProductCategory
         })
         
     } catch (error) {

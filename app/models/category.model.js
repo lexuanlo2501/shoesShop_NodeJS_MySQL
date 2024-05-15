@@ -32,7 +32,17 @@ Category.get_all = async (result) => {
 
 Category.create = async (data, result) => {
     try {
-        await sqlCustom.executeSql_value(`INSERT INTO category SET ?`,data)
+        function capitalizeWords(str) {
+            return str.split(' ').map(word => {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+
+        const dataPost = {...data}
+        if(dataPost.name) {
+            dataPost.name = capitalizeWords(dataPost.name)
+        }
+        await sqlCustom.executeSql_value(`INSERT INTO category SET ?`,dataPost)
         result("Thêm mục lục sản phẩm thành công")
     } catch (error) {
         result(null)

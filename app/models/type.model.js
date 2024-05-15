@@ -18,7 +18,18 @@ Type.get_all = async (result) => {
 
 Type.create = async (data, result) => {
     try {
-        await sqlCustom.executeSql_value(`INSERT INTO types SET ?`,data)
+        function capitalizeWords(str) {
+            return str.split(' ').map(word => {
+                return word.charAt(0).toUpperCase() + word.slice(1);
+            }).join(' ');
+        }
+        const dataPost = {...data}
+
+        if(dataPost.type_name) {
+            dataPost.type_name = capitalizeWords(dataPost.type_name)
+        }
+
+        await sqlCustom.executeSql_value(`INSERT INTO types SET ?`, dataPost)
         result("Thêm loại sản phẩm thành công")
     } catch (error) {
         result(null)
