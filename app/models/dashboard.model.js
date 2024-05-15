@@ -3,6 +3,7 @@ const { executeSql } = require("../common/sqlQuery")
 const Dashboard = (Dashboard) => {
 
 }
+const shoesModel = require("../models/shoes.model")
 
 Dashboard.get = async (_query,result) => {
     try {
@@ -36,6 +37,21 @@ Dashboard.get = async (_query,result) => {
             }
         }))
 
+        hotProductCategory = await Promise.all(hotProductCategory.map( async i => {
+                
+            return {
+                ...i,
+                products :await Promise.all(i.products.map(async j => {
+                    const dataFind_prod = (await shoesModel.findList(j.product_id+"")).shoes
+                    console.log(dataFind_prod)
+                    return {
+                        ...j,
+                        ...dataFind_prod[0]
+                    }
+                }))
+            }
+        }))
+
         const hot_product = await executeSql(`
             SELECT product_id, SUM(quantity) as total FROM detail_order
             INNER JOIN orders ON orders.id = detail_order.order_id
@@ -49,7 +65,6 @@ Dashboard.get = async (_query,result) => {
         // INNER JOIN products ON products.id = detail_order.product_id
         // WHERE products.seller_id IS NULL
         // console.log(hot_product)
-        const shoesModel = require("../models/shoes.model")
         const dataFind_shoes = (await shoesModel.findList(hot_product.map(i => i.product_id).toString()||"0")).shoes
         // console.log(dataFind_shoes)
 

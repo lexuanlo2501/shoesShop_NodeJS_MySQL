@@ -143,7 +143,7 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         const shoes_id = shoes.map(i => i.id).toString() || 0
         // executeSql_all
         const AmountProducts_sold = await sqlCustom.executeSql("select product_id, SUM(quantity) as sold from detail_order WHERE product_id in (" + shoes_id + ") group BY product_id")
-        console.log({AmountProducts_sold:AmountProducts_sold})
+        // console.log({AmountProducts_sold:AmountProducts_sold})
 
         const inventory = await sqlCustom.executeSql(`SELECT * FROM inventory WHERE product_id IN (${shoes_id || 0})`)
         const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id IN (${shoes_id || 0})`)
@@ -272,6 +272,13 @@ Shoes.create = async (data, result) => {
 
 Shoes.delete = async (id, result) => {
     try {
+        const findProdOrder = await sqlCustom.executeSql_value("SELECT product_id FROM detail_order WHERE product_id=? LIMIT 1",id)
+
+        if(findProdOrder.length !== 0) {
+            result({message: "Không thể xóa vì có đơn hàng đang sở hữu sản phẩm này", status: false})
+            return
+        }
+
         // SỬ LÝ XÓA FILE ẢNH TRONG FOLDER public/imgs
         const handleDeleteFileImg = (img_imgs) => {
             let filePath = __dirname + "/public/imgs/" + img_imgs; // TẠO ĐƯỜNG DẪN ĐỂ XÓA ẢNH
