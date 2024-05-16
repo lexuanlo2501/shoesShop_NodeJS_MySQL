@@ -149,9 +149,12 @@ Shoes.get_all = async (query_ = {}, result=() => {}) => {
         const imgs = await sqlCustom.executeSql(`SELECT * FROM imgs WHERE product_id IN (${shoes_id || 0})`)
         const discounts = await sqlCustom.executeSql_SelectAll('discount')
         const types = await sqlCustom.executeSql_SelectAll('types')
+        const categories = await sqlCustom.executeSql_SelectAll('category')
+
 
         const combine = shoes.map(product => ({
             ...product,
+            categoryID: types.find(i => i.id === product.type)?.category_id,
             type: types.find(i => i.id === product.type)?.type_name,
             discount_id: discounts.find(i => i.id === product.discount_id)?.per ,
             inventory: inventory.filter(i => i.product_id === product.id).map(i => ({
