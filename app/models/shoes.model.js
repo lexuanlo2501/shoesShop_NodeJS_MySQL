@@ -453,9 +453,12 @@ Shoes.recommendProd = async (accID, result) => {
     console.log(accID)
 
     axios.get('https://httpbin.org/get')
-    .then(response => {
-        console.log(response.data);
-        result(response.data)
+    .then(async response => {
+        const prodID = [59,60]
+        let productFind = await Shoes.get_all({_ids:"59,60"})
+
+
+        result(productFind.shoes)
     })
     .catch(error => {
         console.error('Error:', error);
