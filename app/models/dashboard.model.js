@@ -22,7 +22,7 @@ Dashboard.get = async (_query,result) => {
                 INNER JOIN orders ON orders.id = detail_order.order_id
                 INNER JOIN products ON products.id = detail_order.product_id
                 INNER JOIN types ON products.type = types.id
-                WHERE YEAR(date_order)=${_year} AND products.seller_id IS NULL AND types.category_id = ${categoryID}
+                WHERE YEAR(date_order)=${_year} AND products.seller_id IS NULL AND types.category_id = ${categoryID} AND orders.status = 3
                 GROUP BY product_id
                 ORDER BY SUM(quantity) DESC
                 LIMIT 3
@@ -56,7 +56,7 @@ Dashboard.get = async (_query,result) => {
             SELECT product_id, SUM(quantity) as total FROM detail_order
             INNER JOIN orders ON orders.id = detail_order.order_id
             INNER JOIN products ON products.id = detail_order.product_id
-            WHERE YEAR(date_order)=${_year} AND products.seller_id IS NULL
+            WHERE YEAR(date_order)=${_year} AND products.seller_id IS NULL AND orders.status = 3
             GROUP BY product_id
             ORDER BY SUM(quantity) DESC
             LIMIT 3
@@ -72,7 +72,7 @@ Dashboard.get = async (_query,result) => {
 
         const mostPurchAcc =  await executeSql(`
             SELECT client_id, COUNT(*) as total FROM orders
-            ${ _year ? `WHERE YEAR(date_order)=${_year}`:""}
+            ${ _year ? `WHERE YEAR(date_order)=${_year} AND status = 3`:""}
             GROUP BY client_id
             ORDER BY COUNT(*) DESC
             LIMIT 5`
@@ -95,11 +95,11 @@ Dashboard.get = async (_query,result) => {
         let d = new Date()
         const revenue_month = await executeSql(`
             SELECT MONTH(date_order) as month , SUM(amount) as amount FROM orders 
-            WHERE year(date_order)=${_year || d.getFullYear()}
+            WHERE year(date_order)=${_year || d.getFullYear()} AND status = 3
             GROUP BY MONTH(date_order)`
         )
 
-        const numberOfOrders =  await executeSql(`SELECT COUNT(*) as total FROM orders WHERE YEAR(date_order)=${_year}`)
+        const numberOfOrders =  await executeSql(`SELECT COUNT(*) as total FROM orders WHERE YEAR(date_order)=${_year} AND status = 3`)
        
         
         result({
