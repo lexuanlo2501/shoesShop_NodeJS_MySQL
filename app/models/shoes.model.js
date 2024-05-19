@@ -452,12 +452,9 @@ Shoes.modifyDiscount = async (data, result) => {
 Shoes.recommendProd = async (accID, result) => {
     console.log(accID)
 
-    axios.get('https://httpbin.org/get')
-    .then(async response => {
-        const prodID = [59,60]
-        let productFind = await Shoes.get_all({_ids:"59,60"})
-
-
+    axios.get('http://127.0.0.1:3001/' + accID)
+    .then(async res => {
+        let productFind = await Shoes.get_all({_ids:res.data.toString()})
         result(productFind.shoes)
     })
     .catch(error => {
