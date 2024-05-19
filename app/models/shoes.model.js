@@ -1,6 +1,6 @@
 const db = require("../common/connect")
 const fs = require('fs')
-
+const axios = require('axios');
 const Shoes = (shoes) => {}
 
 const sqlCustom = require('../common/sqlQuery');
@@ -449,7 +449,18 @@ Shoes.modifyDiscount = async (data, result) => {
     }
 }
 
+Shoes.recommendProd = async (accID, result) => {
+    console.log(accID)
 
+    axios.get('https://httpbin.org/get')
+    .then(response => {
+        console.log(response.data);
+        result(response.data)
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
 
 
 

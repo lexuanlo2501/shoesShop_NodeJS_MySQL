@@ -126,3 +126,9 @@ exports.modify_discount = (req, res) => {
   })
 }
 
+exports.recommend_prod = (req, res) => {
+  Shoes.recommendProd(req.params.accID, response => {
+    res.status(200).send(response)
+  })
+}
+

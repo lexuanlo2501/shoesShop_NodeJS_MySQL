@@ -23,6 +23,8 @@ const upload = multer({
 
 module.exports = (router) => {
     const shoesController = require("../controllers/shoes.controller")
+    router.get("/recommendProd/:accID", shoesController.recommend_prod)
+
     router.get("/shoes", shoesController.get_all_shoes)
     router.get("/shoes/brand/:br_id", shoesController.get_all_shoes)
 
