@@ -455,7 +455,7 @@ Shoes.recommendProd = async (accID, result) => {
     axios.get('http://127.0.0.1:3001/' + accID)
     .then(async res => {
         let productFind = await Shoes.get_all({_ids:res.data.toString()})
-        result(productFind.shoes)
+        result(productFind.shoes || [])
     })
     .catch(error => {
         console.error('Error:', error);

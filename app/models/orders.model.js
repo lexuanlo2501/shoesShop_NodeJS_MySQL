@@ -354,6 +354,15 @@ Orders.rating = async (data, result) => {
             result("Vui lòng nhập số sao từ 1-5")
             return 
         }
+        const findRating =  (await sqlCustom.executeSql(`
+            SELECT detail_order.product_id as productID, accounts.accID
+            FROM detail_order
+            INNER JOIN orders ON orders.id = detail_order.order_id
+            INNER JOIN accounts ON accounts.accName = orders.client_id
+            WHERE detail_order.id = ${data.detail_order_id}  AND rating IS NULL
+        `))[0]
+
+        await sqlCustom.executeSql_value("UPDATE rating SET rating = ? WHERE accID = ? AND productID = ? AND rating = 0", [data.rating, findRating.accID, findRating.productID])
 
         await sqlCustom.executeSql_value("UPDATE detail_order SET rating = ? WHERE id = ?", [data.rating, data.detail_order_id])
         result("Đánh giá sản phẩm thành công, cảm ơn bạn đã phản hồi cho chúng tôi")
